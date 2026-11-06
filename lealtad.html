@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Programa de Lealtad | Club Meraki Studio Jrz</title>
+    <!-- Favicon Local -->
+    <link rel="icon" type="image/jpeg" href="meraki logo.jpg">
+    <!-- Fuentes Google Premium -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #08080a;
+            --bg-card: rgba(18, 18, 22, 0.85);
+            --gold-primary: #d4af37;
+            --gold-light: #f3e5ab;
+            --gold-gradient: linear-gradient(135deg, #bf953f, #fcf6ba, #b38728, #fbf5b7);
+            --rose-accent: #e0a9af;
+            --text-main: #f5f5f7;
+            --text-muted: #a1a1a6;
+            --border-glow: rgba(212, 175, 55, 0.3);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            scroll-behavior: smooth;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Fondo Animado */
+        .animated-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            pointer-events: none;
+            z-index: -1;
+            overflow: hidden;
+            background: 
+                linear-gradient(rgba(8, 8, 10, 0.88), rgba(8, 8, 10, 0.94)),
+                url('https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=1920&q=80') center/cover no-repeat;
+        }
+
+        .orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(100px);
+            opacity: 0.2;
+            animation: floatOrb 18s infinite ease-in-out alternate;
+        }
+
+        .orb-1 { width: 450px; height: 450px; background: #d4af37; top: -100px; left: -100px; }
+        .orb-2 { width: 550px; height: 550px; background: #e0a9af; bottom: -150px; right: -100px; animation-duration: 22s; }
+
+        @keyframes floatOrb {
+            0% { transform: translate(0, 0) scale(1); }
+            50% { transform: translate(50px, 70px) scale(1.1); }
+            100% { transform: translate(-30px, 30px) scale(0.95); }
+        }
+
+        /* Header / Nav */
+        header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 20px 8%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(8, 8, 10, 0.9);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            z-index: 1000;
+        }
+
+        .logo {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.8rem;
+            font-weight: 700;
+            letter-spacing: 2px;
+            background: var(--gold-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-transform: uppercase;
+            text-decoration: none;
+        }
+
+        .nav-back {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--gold-light);
+            padding: 10px 22px;
+            border-radius: 50px;
+            font-weight: 600;
+            text-decoration: none;
+            font-size: 0.9rem;
+            border: 1px solid rgba(212, 175, 55, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .nav-back:hover {
+            background: var(--gold-gradient);
+            color: #000;
+            border-color: transparent;
+        }
+
+        /* Hero Lealtad */
+        .hero-rewards {
+            padding: 160px 8% 60px;
+            text-align: center;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .badge-vip {
+            display: inline-block;
+            padding: 6px 18px;
+            border-radius: 30px;
+            background: rgba(212, 175, 55, 0.1);
+            border: 1px solid var(--gold-primary);
+            color: var(--gold-light);
+            font-size: 0.85rem;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-bottom: 20px;
+        }
+
+        .hero-rewards h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 3.5rem;
+            margin-bottom: 20px;
+            line-height: 1.2;
+        }
+
+        .hero-rewards h1 span {
+            background: var(--gold-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-style: italic;
+        }
+
+        .hero-rewards p {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+            line-height: 1.7;
+        }
+
+        /* Cómo Funciona */
+        .how-it-works {
+            padding: 60px 8%;
+            background: rgba(0, 0, 0, 0.3);
+        }
+
+        .steps-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 30px;
+            max-width: 1100px;
+            margin: 40px auto 0;
+        }
+
+        .step-card {
+            background: var(--bg-card);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 20px;
+            padding: 30px;
+            text-align: center;
+            position: relative;
+        }
+
+        .step-num {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: var(--gold-gradient);
+            color: #000;
+            font-weight: 700;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+        }
+
+        .step-card h3 {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.3rem;
+            color: var(--gold-light);
+            margin-bottom: 10px;
+        }
+
+        .step-card p {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        /* Niveles VIP */
+        .tiers-section {
+            padding: 80px 8%;
+        }
+
+        .section-title {
+            text-align: center;
+            max-width: 600px;
+            margin: 0 auto 50px;
+        }
+
+        .section-title h2 {
+            font-family: 'Playfair Display', serif;
+            font-size: 2.8rem;
+            margin-bottom: 12px;
+        }
+
+        .section-title p { color: var(--text-muted); font-size: 1rem; }
+
+        .tiers-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 25px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .tier-card {
+            background: var(--bg-card);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 20px;
+            padding: 35px 24px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .tier-card:hover {
+            border-color: var(--border-glow);
+            transform: translateY(-8px);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.6);
+        }
+
+        .tier-icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+        }
+
+        .tier-card h3 {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.6rem;
+            color: var(--gold-light);
+            margin-bottom: 4px;
+        }
+
+        .tier-visits {
+            color: var(--rose-accent);
+            font-size: 0.85rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 20px;
+        }
+
+        .tier-benefits {
+            list-style: none;
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+            padding-top: 20px;
+        }
+
+        .tier-benefits li {
+            color: var(--text-muted);
+            font-size: 0.88rem;
+            padding: 8px 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .tier-benefits li::before {
+            content: "✓";
+            color: var(--gold-primary);
+            font-weight: 700;
+        }
+
+        /* Consulta tus Puntos */
+        .check-section {
+            padding: 80px 8%;
+            background: rgba(0, 0, 0, 0.5);
+            text-align: center;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .check-box {
+            max-width: 550px;
+            margin: 30px auto 0;
+            background: var(--bg-card);
+            border: 1px solid var(--border-glow);
+            border-radius: 24px;
+            padding: 40px;
+            backdrop-filter: blur(15px);
+        }
+
+        .check-box p {
+            color: var(--text-muted);
+            margin-bottom: 24px;
+            font-size: 0.95rem;
+        }
+
+        .btn-whatsapp-check {
+            display: inline-block;
+            width: 100%;
+            background: var(--gold-gradient);
+            color: #000;
+            padding: 16px;
+            border-radius: 50px;
+            font-weight: 700;
+            font-size: 1rem;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 25px rgba(212, 175, 55, 0.25);
+        }
+
+        .btn-whatsapp-check:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 30px rgba(212, 175, 55, 0.4);
+        }
+
+        /* Footer */
+        footer { padding: 40px 8%; text-align: center; color: rgba(255, 255, 255, 0.3); font-size: 0.85rem; }
+
+        @media (max-width: 1024px) {
+            .tiers-grid { grid-template-columns: repeat(2, 1fr); }
+            .steps-grid { grid-template-columns: 1fr; }
+        }
+
+        @media (max-width: 600px) {
+            .hero-rewards h1 { font-size: 2.5rem; }
+            .tiers-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Fondo Animado -->
+    <div class="animated-bg">
+        <div class="orb orb-1"></div>
+        <div class="orb orb-2"></div>
+    </div>
+
+    <!-- Header Navigation -->
+    <header>
+        <a href="index.html" class="logo">Meraki Studio</a>
+        <a href="index.html" class="nav-back">← Volver al Inicio</a>
+    </header>
+
+    <!-- Hero Section Lealtad -->
+    <section class="hero-rewards">
+        <span class="badge-vip">Club Meraki Rewards</span>
+        <h1>Cada Visita <span>Recompensa Tu Belleza</span></h1>
+        <p>Queremos consentirte por ser parte de nuestra comunidad. Con nuestro Programa de Lealtad acumulas beneficios exclusivos, descuentos especiales y regalitos VIP en cada cita.</p>
+    </section>
+
+    <!-- Cómo Funciona -->
+    <section class="how-it-works">
+        <div class="section-title">
+            <h2>¿Cómo Funciona?</h2>
+            <p>Es muy sencillo comenzar a disfrutar de los beneficios del Club Meraki.</p>
+        </div>
+
+        <div class="steps-grid">
+            <div class="step-card">
+                <div class="step-num">1</div>
+                <h3>Agenda tu Cita</h3>
+                <p>Reserva cualquiera de nuestros servicios de spa, uñas, pestañas o cabello por WhatsApp.</p>
+            </div>
+
+            <div class="step-card">
+                <div class="step-num">2</div>
+                <h3>Registra tu Visita</h3>
+                <p>Al terminar tu tratamiento, tu visita queda registrada automáticamente en nuestro sistema.</p>
+            </div>
+
+            <div class="step-card">
+                <div class="step-num">3</div>
+                <h3>Desbloquea Premios</h3>
+                <p>Sube de nivel VIP y canjea cortesías, masajes de regalo y descuentos directos.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Niveles VIP -->
+    <section class="tiers-section">
+        <div class="section-title">
+            <h2>Niveles de Beneficios VIP</h2>
+            <p>Entre más nos visitas, mejores son las recompensas que desbloqueas.</p>
+        </div>
+
+        <div class="tiers-grid">
+            <!-- Nivel Bronce -->
+            <div class="tier-card">
+                <div>
+                    <div class="tier-icon">🥉</div>
+                    <h3>Bronce</h3>
+                    <div class="tier-visits">0 a 4 Visitas</div>
+                </div>
+                <ul class="tier-benefits">
+                    <li>Registro inicial al Club</li>
+                    <li>Promociones de temporada</li>
+                    <li>Recordatorio de citas VIP</li>
+                </ul>
+            </div>
+
+            <!-- Nivel Plata -->
+            <div class="tier-card">
+                <div>
+                    <div class="tier-icon">🥈</div>
+                    <h3>Plata</h3>
+                    <div class="tier-visits">5 a 14 Visitas</div>
+                </div>
+                <ul class="tier-benefits">
+                    <li>5% de descuento en servicios</li>
+                    <li>Detalle especial en tu cumpleaños</li>
+                    <li>Acceso preferente a agenda</li>
+                </ul>
+            </div>
+
+            <!-- Nivel Oro -->
+            <div class="tier-card">
+                <div>
+                    <div class="tier-icon">🥇</div>
+                    <h3>Oro</h3>
+                    <div class="tier-visits">15 a 29 Visitas</div>
+                </div>
+                <ul class="tier-benefits">
+                    <li>10% de descuento en servicios</li>
+                    <li>1 Tratamiento Facial de regalo</li>
+                    <li>Bebida de cortesía en cada visita</li>
+                </ul>
+            </div>
+
+            <!-- Nivel Diamante -->
+            <div class="tier-card">
+                <div>
+                    <div class="tier-icon">💎</div>
+                    <h3>Diamante</h3>
+                    <div class="tier-visits">30+ Visitas</div>
+                </div>
+                <ul class="tier-benefits">
+                    <li>15% de descuento permanente</li>
+                    <li>Masaje Relajante gratis al año</li>
+                    <li>Prioridad absoluta en agenda VIP</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- Consulta tus Puntos -->
+    <section class="check-section">
+        <div class="section-title">
+            <h2>¿Quieres saber tu Nivel o Puntos?</h2>
+            <p>Consulta al instante tu historial de visitas directamente con nuestro equipo.</p>
+        </div>
+
+        <div class="check-box">
+            <p>Haz clic abajo para enviarnos un mensaje rápido por WhatsApp y te diremos cuántas visitas tienes acumuladas.</p>
+            <a href="https://wa.me/526567989207?text=Hola%2C%20quiero%20consultar%20mi%20nivel%20y%20puntos%20del%20Club%20Meraki" target="_blank" class="btn-whatsapp-check">
+                Consultar mis Puntos por WhatsApp ➔
+            </a>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <p>© 2026 Meraki Studio Jrz — Todos los derechos reservados.</p>
+    </footer>
+
+</body>
+</html>
