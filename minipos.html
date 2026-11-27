@@ -1,0 +1,1962 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Meraki Control · Registradora, Citas y Personal</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+          }
+        }
+      }
+    };
+  </script>
+</head>
+<body class="bg-stone-100 text-stone-800 antialiased selection:bg-emerald-200 selection:text-stone-900 min-h-screen flex flex-col">
+
+  <!-- Notificación flotante no bloqueante (reemplaza alert/confirm) -->
+  <div id="toast-box" class="fixed bottom-4 right-4 z-50 hidden max-w-sm rounded-2xl px-4 py-3 text-xs sm:text-sm font-bold shadow-2xl border transition-all"></div>
+
+  <!-- Barra superior de estado y acceso rápido -->
+  <header class="sticky top-0 z-40 bg-stone-900 text-stone-100 border-b border-stone-800 shadow-md">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-emerald-600 to-teal-700 flex items-center justify-center text-white font-extrabold text-lg shadow-inner">
+          M
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 id="header-business-name" class="text-base sm:text-lg font-extrabold tracking-tight text-white">
+              Meraki Studio
+            </h1>
+            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-400/30">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+              Offline Ready
+            </span>
+          </div>
+          <p class="text-[11px] text-stone-400">
+            Sistema Portátil · Citas, Checador y Caja
+          </p>
+        </div>
+      </div>
+
+      <!-- Indicador de sesión activa y botón de cambio de PIN -->
+      <div class="flex items-center gap-2 sm:gap-3">
+        <div id="active-user-pill" class="hidden items-center gap-2 px-3 py-1.5 rounded-xl bg-stone-800 border border-stone-700 text-xs">
+          <span class="w-2 h-2 rounded-full bg-amber-400"></span>
+          <span id="active-user-name" class="font-bold text-white">Usuario</span>
+          <span id="active-user-role" class="text-stone-400 uppercase text-[10px] font-extrabold">Rol</span>
+        </div>
+
+        <button type="button" onclick="abrirChecadorModal()"
+                class="px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-stone-950 text-xs sm:text-sm font-extrabold shadow-xs transition cursor-pointer">
+          ⏱ Checador PIN
+        </button>
+
+        <button type="button" id="btn-logout" onclick="cerrarSesionPin()"
+                class="hidden px-3.5 py-2 rounded-xl bg-stone-800 hover:bg-stone-700 text-stone-200 border border-stone-700 text-xs sm:text-sm font-bold transition cursor-pointer">
+          Cambiar PIN
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- PANTALLA 1: ACCESO POR PIN -->
+  <main id="view-login" class="flex-1 flex items-center justify-center p-4 sm:p-6">
+    <div class="w-full max-w-4xl grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+      <!-- Panel izquierdo: Teclado PIN táctil -->
+      <div class="lg:col-span-6 bg-white rounded-3xl p-6 sm:p-8 shadow-xl border border-stone-200/90">
+        <div class="text-center mb-5">
+          <span class="inline-block px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-extrabold uppercase tracking-wider mb-2">
+            Acceso Rápido por PIN
+          </span>
+          <h2 class="text-2xl font-extrabold text-stone-900">Ingresa tu PIN</h2>
+          <p class="text-xs sm:text-sm text-stone-500 mt-1">
+            Accede a tus citas, caja o panel administrativo según tu perfil.
+          </p>
+        </div>
+
+        <!-- Visor de dígitos PIN -->
+        <div class="mb-5">
+          <div id="pin-display" class="w-full h-14 rounded-2xl bg-stone-100 border-2 border-stone-300 flex items-center justify-center gap-3 text-2xl font-extrabold tracking-[0.5em] text-stone-900">
+            <span class="text-stone-400 text-sm tracking-normal font-semibold">••••</span>
+          </div>
+          <p id="pin-error-msg" class="hidden text-center text-xs font-bold text-rose-600 mt-2">
+            PIN no reconocido. Intenta nuevamente.
+          </p>
+        </div>
+
+        <!-- Teclado numérico grande para pantalla táctil -->
+        <div class="grid grid-cols-3 gap-2.5 sm:gap-3">
+          <button type="button" onclick="agregarDigitoPin('1')" class="h-14 rounded-2xl bg-stone-100 hover:bg-stone-200 active:scale-95 text-xl font-extrabold text-stone-800 transition cursor-pointer">1</button>
+          <button type="button" onclick="agregarDigitoPin('2')" class="h-14 rounded-2xl bg-stone-100 hover:bg-stone-200 active:scale-95 text-xl font-extrabold text-stone-800 transition cursor-pointer">2</button>
+          <button type="button" onclick="agregarDigitoPin('3')" class="h-14 rounded-2xl bg-stone-100 hover:bg-stone-200 active:scale-95 text-xl font-extrabold text-stone-800 transition cursor-pointer">3</button>
+          <button type="button" onclick="agregarDigitoPin('4')" class="h-14 rounded-2xl bg-stone-100 hover:bg-stone-200 active:scale-95 text-xl font-extrabold text-stone-800 transition cursor-pointer">4</button>
+          <button type="button" onclick="agregarDigitoPin('5')" class="h-14 rounded-2xl bg-stone-100 hover:bg-stone-200 active:scale-95 text-xl font-extrabold text-stone-800 transition cursor-pointer">5</button>
+          <button type="button" onclick="agregarDigitoPin('6')" class="h-14 rounded-2xl bg-stone-100 hover:bg-stone-200 active:scale-95 text-xl font-extrabold text-stone-800 transition cursor-pointer">6</button>
+          <button type="button" onclick="agregarDigitoPin('7')" class="h-14 rounded-2xl bg-stone-100 hover:bg-stone-200 active:scale-95 text-xl font-extrabold text-stone-800 transition cursor-pointer">7</button>
+          <button type="button" onclick="agregarDigitoPin('8')" class="h-14 rounded-2xl bg-stone-100 hover:bg-stone-200 active:scale-95 text-xl font-extrabold text-stone-800 transition cursor-pointer">8</button>
+          <button type="button" onclick="agregarDigitoPin('9')" class="h-14 rounded-2xl bg-stone-100 hover:bg-stone-200 active:scale-95 text-xl font-extrabold text-stone-800 transition cursor-pointer">9</button>
+          <button type="button" onclick="limpiarPinInput()" class="h-14 rounded-2xl bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs sm:text-sm font-extrabold transition cursor-pointer">Borrar</button>
+          <button type="button" onclick="agregarDigitoPin('0')" class="h-14 rounded-2xl bg-stone-100 hover:bg-stone-200 active:scale-95 text-xl font-extrabold text-stone-800 transition cursor-pointer">0</button>
+          <button type="button" onclick="validarAccesoPin()" class="h-14 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-extrabold shadow-md transition cursor-pointer">Entrar ✓</button>
+        </div>
+      </div>
+
+      <!-- Panel derecho: Accesos de demostración listos para probar con 1 toque -->
+      <div class="lg:col-span-6 space-y-4">
+        <div class="bg-white rounded-3xl p-6 border border-stone-200 shadow-sm space-y-3">
+          <span class="inline-block px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800 text-[11px] font-extrabold uppercase">
+            Perfiles Configurados (Demo Lista)
+          </span>
+          <h3 class="text-lg font-extrabold text-stone-900">Prueba cada rol con un toque</h3>
+          <p class="text-xs text-stone-600 leading-relaxed">
+            Cada persona tiene su propio PIN único. Los especialistas solo ven sus citas y servicios (sin precios previos) y envían sus trabajos terminados directo a caja sin gastar papel.
+          </p>
+
+          <div id="demo-pins-list" class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-2"></div>
+        </div>
+
+        <div class="bg-stone-900 text-stone-200 rounded-3xl p-5 border border-stone-800 text-xs space-y-2">
+          <p class="font-extrabold text-amber-400 uppercase tracking-wider">Respaldo Portátil &amp; Carpeta Compartida</p>
+          <p class="text-stone-300 leading-relaxed">
+            Todos los movimientos se guardan al instante en el navegador y pueden exportarse/importarse en un archivo <code class="text-emerald-300">.json</code> dentro de tu memoria USB, Google Drive o Dropbox.
+          </p>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- PANTALLA 2: APLICACIÓN PRINCIPAL SEGÚN ROL -->
+  <main id="view-app" class="hidden flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-5 space-y-5">
+
+    <!-- Barra de navegación de módulos permitidos para el usuario activo -->
+    <nav id="role-nav-tabs" class="flex flex-wrap items-center gap-2 bg-white p-2 rounded-2xl border border-stone-200 shadow-xs"></nav>
+
+    <!-- MÓDULO A: VISTA DE ESPECIALISTA (Citas sin precios + Servicios + Botón Terminado + Mis Ganancias) -->
+    <section id="mod-especialista" class="hidden space-y-5">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+        <!-- Columna izquierda: Citas agendadas y servicios asignados (SIN precios visibles) -->
+        <div class="lg:col-span-7 space-y-4">
+          <div class="bg-white rounded-3xl p-5 border border-stone-200 shadow-xs space-y-4">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <span class="text-[11px] font-extrabold uppercase tracking-wider text-emerald-700 bg-emerald-100 px-2.5 py-0.5 rounded-full">
+                  Agenda del Día
+                </span>
+                <h2 class="text-xl font-extrabold text-stone-900 mt-1">Mis Citas por Atender</h2>
+              </div>
+              <button type="button" onclick="abrirModalNuevaCita()"
+                      class="px-3.5 py-2 rounded-xl bg-stone-900 hover:bg-stone-800 text-white text-xs font-bold transition cursor-pointer">
+                + Agendar / Walk-in
+              </button>
+            </div>
+
+            <div id="esp-citas-list" class="space-y-3"></div>
+          </div>
+
+          <!-- Servicios extra que realiza esta especialista (sin montos de cobro) -->
+          <div class="bg-white rounded-3xl p-5 border border-stone-200 shadow-xs space-y-3">
+            <div>
+              <h3 class="text-base font-extrabold text-stone-900">Pase Rápido a Caja (Cliente sin cita previa)</h3>
+              <p class="text-xs text-stone-500">
+                Selecciona el servicio que realizaste para mandarlo directo a caja con tu nombre, sin papel y sin mostrar precios en tu pantalla.
+              </p>
+            </div>
+            <div id="esp-servicios-rapidos" class="grid grid-cols-1 sm:grid-cols-2 gap-2.5"></div>
+          </div>
+        </div>
+
+        <!-- Columna derecha: Transparencia en "Mis Ganancias" + Estado de Checador -->
+        <div class="lg:col-span-5 space-y-4">
+          <div class="bg-gradient-to-br from-stone-900 via-stone-800 to-emerald-950 text-white rounded-3xl p-5 sm:p-6 shadow-lg border border-stone-700 space-y-4">
+            <div class="flex items-center justify-between">
+              <div>
+                <span class="text-[11px] font-extrabold uppercase tracking-wider text-amber-300">
+                  Transparencia Total
+                </span>
+                <h2 class="text-xl font-extrabold mt-0.5">Mis Ganancias</h2>
+              </div>
+              <span id="esp-esquema-badge" class="px-2.5 py-1 rounded-xl bg-white/10 text-emerald-300 text-xs font-bold">
+                Esquema
+              </span>
+            </div>
+
+            <!-- Ganancia de HOY -->
+            <div class="bg-white/10 rounded-2xl p-4 border border-white/10 space-y-2">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-bold text-stone-300 uppercase">Ganancia de Hoy (Cobrado en Caja)</span>
+                <span id="esp-ganancia-hoy-total" class="text-2xl font-extrabold text-emerald-300">$0.00</span>
+              </div>
+              <div class="grid grid-cols-2 gap-2 pt-1 text-xs border-t border-white/10">
+                <div>
+                  <span class="text-stone-400 block">Por servicios / sueldo:</span>
+                  <strong id="esp-ganancia-hoy-base" class="text-white">$0.00</strong>
+                </div>
+                <div>
+                  <span class="text-stone-400 block">Propinas (100% tuyas):</span>
+                  <strong id="esp-ganancia-hoy-propinas" class="text-amber-300">$0.00</strong>
+                </div>
+              </div>
+            </div>
+
+            <!-- Ganancia de la SEMANA (Corte al Viernes) -->
+            <div class="bg-white/10 rounded-2xl p-4 border border-white/10 space-y-2">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-bold text-stone-300 uppercase">Acumulado Semanal (Viernes)</span>
+                <span id="esp-ganancia-sem-total" class="text-2xl font-extrabold text-amber-300">$0.00</span>
+              </div>
+              <div class="grid grid-cols-2 gap-2 pt-1 text-xs border-t border-white/10">
+                <div>
+                  <span class="text-stone-400 block">Base / Comisiones:</span>
+                  <strong id="esp-ganancia-sem-base" class="text-white">$0.00</strong>
+                </div>
+                <div>
+                  <span class="text-stone-400 block">Propinas semana:</span>
+                  <strong id="esp-ganancia-sem-propinas" class="text-amber-300">$0.00</strong>
+                </div>
+              </div>
+              <p class="text-[11px] text-stone-300 pt-1">
+                * Solo refleja servicios ya cobrados en caja. Servicios enviados pero aún pendientes de cobro: <strong id="esp-pendientes-cobro-count" class="text-white">0</strong>.
+              </p>
+            </div>
+
+            <!-- Horas trabajadas hoy -->
+            <div class="bg-white/5 rounded-2xl p-3.5 border border-white/10 flex items-center justify-between text-xs">
+              <div>
+                <span class="text-stone-400 block">Tiempo efectivo hoy (Checador):</span>
+                <strong id="esp-horas-hoy" class="text-sm text-white font-extrabold">0.00 hrs</strong>
+              </div>
+              <button type="button" onclick="abrirChecadorModal()"
+                      class="px-3 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-stone-950 font-extrabold transition cursor-pointer">
+                Marcar Reloj
+              </button>
+            </div>
+          </div>
+
+          <!-- Historial reciente del especialista -->
+          <div class="bg-white rounded-3xl p-5 border border-stone-200 shadow-xs space-y-3">
+            <h3 class="text-sm font-extrabold text-stone-900 uppercase tracking-wider">Mis Servicios de Hoy</h3>
+            <div id="esp-historial-hoy" class="space-y-2 text-xs"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- MÓDULO B: CAJA / REGISTRADORA Y CALENDARIO GLOBAL (La Tía) -->
+    <section id="mod-caja" class="hidden space-y-5">
+      <!-- Resumen rápido de caja del día -->
+      <div class="grid grid-cols-2 lg:grid-cols-5 gap-3">
+        <div class="bg-white rounded-2xl p-4 border border-stone-200 shadow-xs">
+          <p class="text-[11px] font-extrabold uppercase text-stone-500">Por Cobrar (Terminados)</p>
+          <p id="caja-kpi-cola" class="text-2xl font-extrabold text-amber-600 mt-1">0</p>
+        </div>
+        <div class="bg-white rounded-2xl p-4 border border-stone-200 shadow-xs">
+          <p class="text-[11px] font-extrabold uppercase text-stone-500">Efectivo en Cajón (MXN)</p>
+          <p id="caja-kpi-efectivo" class="text-2xl font-extrabold text-emerald-700 mt-1">$0.00</p>
+        </div>
+        <div class="bg-white rounded-2xl p-4 border border-stone-200 shadow-xs">
+          <p class="text-[11px] font-extrabold uppercase text-stone-500">Digital (Tarjeta/Transf/CoDi)</p>
+          <p id="caja-kpi-digital" class="text-2xl font-extrabold text-blue-700 mt-1">$0.00</p>
+        </div>
+        <div class="bg-white rounded-2xl p-4 border border-stone-200 shadow-xs">
+          <p class="text-[11px] font-extrabold uppercase text-stone-500">Propinas Recaudadas Hoy</p>
+          <p id="caja-kpi-propinas" class="text-2xl font-extrabold text-purple-700 mt-1">$0.00</p>
+        </div>
+        <div class="bg-white rounded-2xl p-4 border border-stone-200 shadow-xs col-span-2 lg:col-span-1">
+          <p class="text-[11px] font-extrabold uppercase text-stone-500">Salidas / Gastos Hoy</p>
+          <p id="caja-kpi-gastos" class="text-2xl font-extrabold text-rose-600 mt-1">$0.00</p>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+        <!-- Columna izquierda: Cola de trabajos terminados listos para cobrar -->
+        <div class="lg:col-span-6 bg-white rounded-3xl p-5 border border-stone-200 shadow-xs space-y-4">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <span class="text-[11px] font-extrabold uppercase tracking-wider text-amber-700 bg-amber-100 px-2.5 py-0.5 rounded-full">
+                Sin Papel · Directo a Caja
+              </span>
+              <h2 class="text-lg font-extrabold text-stone-900 mt-1">Listos para Cobrar</h2>
+            </div>
+            <button type="button" onclick="abrirModalCobroDirecto()"
+                    class="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-extrabold transition cursor-pointer">
+              + Cobro Directo
+            </button>
+          </div>
+
+          <div id="caja-cola-cobro" class="space-y-3"></div>
+        </div>
+
+        <!-- Columna derecha: Calendario Global de Citas + Salidas de Caja -->
+        <div class="lg:col-span-6 space-y-5">
+          <!-- Calendario / Citas globales -->
+          <div class="bg-white rounded-3xl p-5 border border-stone-200 shadow-xs space-y-4">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <h2 class="text-lg font-extrabold text-stone-900">Calendario Global de Citas</h2>
+                <p class="text-xs text-stone-500">Reagenda, registra adelantos o crea citas nuevas.</p>
+              </div>
+              <button type="button" onclick="abrirModalNuevaCita()"
+                      class="px-3.5 py-2 rounded-xl bg-stone-900 hover:bg-stone-800 text-white text-xs font-bold transition cursor-pointer">
+                + Nueva Cita
+              </button>
+            </div>
+
+            <div id="caja-citas-globales" class="space-y-2.5"></div>
+          </div>
+
+          <!-- Salidas de dinero / Gastos operativos -->
+          <div class="bg-white rounded-3xl p-5 border border-stone-200 shadow-xs space-y-3">
+            <div class="flex items-center justify-between">
+              <div>
+                <h3 class="text-base font-extrabold text-stone-900">Salidas de Caja / Gastos</h3>
+                <p class="text-xs text-stone-500">Insumos, agua, limpieza o vales pagados desde el cajón.</p>
+              </div>
+            </div>
+            <form onsubmit="registrarGastoCaja(event)" class="grid grid-cols-1 sm:grid-cols-12 gap-2">
+              <input type="text" id="gasto-concepto" required placeholder="Concepto (ej. Toallas / Café)"
+                     class="sm:col-span-6 rounded-xl border border-stone-300 bg-stone-50 px-3 py-2 text-xs sm:text-sm outline-none focus:border-emerald-600" />
+              <input type="number" id="gasto-monto" required min="1" step="any" placeholder="Monto MXN"
+                     class="sm:col-span-3 rounded-xl border border-stone-300 bg-stone-50 px-3 py-2 text-xs sm:text-sm outline-none focus:border-emerald-600" />
+              <button type="submit"
+                      class="sm:col-span-3 py-2 px-3 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-extrabold transition cursor-pointer">
+                Registrar Salida
+              </button>
+            </form>
+            <div id="caja-gastos-list" class="space-y-1.5 text-xs pt-1"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Últimos tickets cobrados hoy -->
+      <div class="bg-white rounded-3xl p-5 border border-stone-200 shadow-xs space-y-3">
+        <div class="flex items-center justify-between">
+          <h3 class="text-base font-extrabold text-stone-900">Tickets Cobrados Hoy</h3>
+          <span class="text-xs text-stone-500">Tipo de cambio actual: <strong id="caja-tc-label">$19.50 MXN/USD</strong></span>
+        </div>
+        <div id="caja-tickets-hoy" class="overflow-x-auto"></div>
+      </div>
+    </section>
+
+    <!-- MÓDULO C: DASHBOARD CONTABLE Y CORTE SEMANAL DE NÓMINA (Dueña / Hermana) -->
+    <section id="mod-dashboard" class="hidden space-y-5">
+      <!-- Filtros de fechas -->
+      <div class="bg-white rounded-3xl p-5 border border-stone-200 shadow-xs flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+        <div>
+          <span class="text-[11px] font-extrabold uppercase tracking-wider text-blue-800 bg-blue-100 px-2.5 py-0.5 rounded-full">
+            Control Financiero y Fiscal
+          </span>
+          <h2 class="text-xl font-extrabold text-stone-900 mt-1">Dashboard de Ingresos y Nómina</h2>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2">
+          <button type="button" onclick="aplicarFiltroRapidoDashboard('hoy')" class="px-3 py-1.5 rounded-xl bg-stone-100 hover:bg-stone-200 text-xs font-bold text-stone-800 cursor-pointer">Hoy</button>
+          <button type="button" onclick="aplicarFiltroRapidoDashboard('semana')" class="px-3 py-1.5 rounded-xl bg-stone-100 hover:bg-stone-200 text-xs font-bold text-stone-800 cursor-pointer">Esta Semana</button>
+          <button type="button" onclick="aplicarFiltroRapidoDashboard('mes')" class="px-3 py-1.5 rounded-xl bg-stone-100 hover:bg-stone-200 text-xs font-bold text-stone-800 cursor-pointer">Este Mes</button>
+          <div class="flex items-center gap-1.5 bg-stone-50 px-2.5 py-1 rounded-xl border border-stone-200">
+            <label for="dash-fecha-inicio" class="text-[11px] font-bold text-stone-500">De:</label>
+            <input type="date" id="dash-fecha-inicio" onchange="renderizarDashboard()" class="text-xs font-semibold bg-transparent outline-none" />
+            <label for="dash-fecha-fin" class="text-[11px] font-bold text-stone-500">A:</label>
+            <input type="date" id="dash-fecha-fin" onchange="renderizarDashboard()" class="text-xs font-semibold bg-transparent outline-none" />
+          </div>
+          <button type="button" onclick="exportarReporteContableCSV()"
+                  class="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-extrabold cursor-pointer">
+            ⬇ Exportar Contabilidad CSV
+          </button>
+        </div>
+      </div>
+
+      <!-- Tarjetas contables: Efectivo vs Digital / Fiscal -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="bg-white rounded-3xl p-5 border border-stone-200 shadow-xs">
+          <p class="text-[11px] font-extrabold uppercase text-stone-500">Ingresos Totales del Periodo</p>
+          <p id="dash-total-ingresos" class="text-2xl sm:text-3xl font-extrabold text-stone-900 mt-1">$0.00</p>
+          <p class="text-xs text-stone-500 mt-1">Servicios + adelantos (sin propinas)</p>
+        </div>
+
+        <div class="bg-white rounded-3xl p-5 border border-emerald-200 shadow-xs">
+          <p class="text-[11px] font-extrabold uppercase text-emerald-700">Columna Efectivo Físico</p>
+          <p id="dash-col-efectivo" class="text-2xl sm:text-3xl font-extrabold text-emerald-700 mt-1">$0.00</p>
+          <p class="text-xs text-stone-500 mt-1">MXN + equivalente USD recibido</p>
+        </div>
+
+        <div class="bg-white rounded-3xl p-5 border border-blue-200 shadow-xs">
+          <p class="text-[11px] font-extrabold uppercase text-blue-700">Columna Digital / Fiscal</p>
+          <p id="dash-col-digital" class="text-2xl sm:text-3xl font-extrabold text-blue-700 mt-1">$0.00</p>
+          <p class="text-xs text-stone-500 mt-1">Tarjeta + Transferencia + CoDi®</p>
+        </div>
+
+        <div class="bg-white rounded-3xl p-5 border border-amber-200 shadow-xs">
+          <p class="text-[11px] font-extrabold uppercase text-amber-700">Utilidad Neta Estimada</p>
+          <p id="dash-utilidad-neta" class="text-2xl sm:text-3xl font-extrabold text-amber-600 mt-1">$0.00</p>
+          <p class="text-xs text-stone-500 mt-1">Ingresos menos nómina y gastos</p>
+        </div>
+      </div>
+
+      <!-- Desglose por método de pago + Corte semanal de viernes por empleado -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+        <div class="lg:col-span-4 bg-white rounded-3xl p-5 border border-stone-200 shadow-xs space-y-3">
+          <h3 class="text-base font-extrabold text-stone-900">Desglose por Método de Pago</h3>
+          <div id="dash-metodos-list" class="space-y-2 text-xs sm:text-sm"></div>
+        </div>
+
+        <div class="lg:col-span-8 bg-white rounded-3xl p-5 border border-stone-200 shadow-xs space-y-4">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <span class="text-[11px] font-extrabold uppercase tracking-wider text-purple-700 bg-purple-100 px-2.5 py-0.5 rounded-full">
+                Corte Semanal (Viernes)
+              </span>
+              <h3 class="text-lg font-extrabold text-stone-900 mt-1">Pago Bancario a Personal</h3>
+              <p class="text-xs text-stone-500">
+                Monto exacto a transferir (comisión/sueldo + propinas cobradas) y control de confirmación bancaria.
+              </p>
+            </div>
+          </div>
+
+          <div id="dash-nomina-list" class="space-y-3"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- MÓDULO D: ADMINISTRACIÓN (Personal, PINs, Servicios, CoDi y Respaldo Portátil) -->
+    <section id="mod-admin" class="hidden space-y-5">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+        <!-- Gestión de Personal y Esquemas de Pago -->
+        <div class="lg:col-span-7 bg-white rounded-3xl p-5 border border-stone-200 shadow-xs space-y-4">
+          <div>
+            <h2 class="text-lg font-extrabold text-stone-900">Equipo, PINs y Esquemas de Pago</h2>
+            <p class="text-xs text-stone-500">Configura PIN único, rol y pago por porcentaje, fijo por día o fijo por hora.</p>
+          </div>
+
+          <form onsubmit="guardarEmpleado(event)" class="grid grid-cols-1 sm:grid-cols-12 gap-2.5 bg-stone-50 p-3.5 rounded-2xl border border-stone-200">
+            <input type="text" id="emp-nombre" required placeholder="Nombre (ej. Sofía)"
+                   class="sm:col-span-3 rounded-xl border border-stone-300 bg-white px-3 py-2 text-xs font-semibold outline-none" />
+            <input type="text" id="emp-pin" required maxlength="6" placeholder="PIN (4 dígitos)"
+                   class="sm:col-span-2 rounded-xl border border-stone-300 bg-white px-3 py-2 text-xs font-semibold outline-none" />
+            <select id="emp-rol" class="sm:col-span-2 rounded-xl border border-stone-300 bg-white px-2.5 py-2 text-xs font-semibold outline-none">
+              <option value="especialista">Especialista</option>
+              <option value="caja">Caja</option>
+              <option value="duena">Dueña</option>
+              <option value="admin">Admin</option>
+            </select>
+            <select id="emp-esquema" class="sm:col-span-3 rounded-xl border border-stone-300 bg-white px-2.5 py-2 text-xs font-semibold outline-none">
+              <option value="porcentaje">% Comisión</option>
+              <option value="dia">Fijo por Día ($)</option>
+              <option value="hora">Fijo por Hora ($)</option>
+            </select>
+            <input type="number" id="emp-valor" required min="0" step="any" placeholder="Valor (% o $)"
+                   class="sm:col-span-2 rounded-xl border border-stone-300 bg-white px-3 py-2 text-xs font-semibold outline-none" />
+            <button type="submit" class="sm:col-span-12 py-2 rounded-xl bg-stone-900 hover:bg-stone-800 text-white text-xs font-extrabold cursor-pointer">
+              + Agregar / Actualizar Miembro del Equipo
+            </button>
+          </form>
+
+          <div id="admin-empleados-list" class="space-y-2"></div>
+        </div>
+
+        <!-- Configuración del Negocio, CoDi y Respaldo Portátil -->
+        <div class="lg:col-span-5 space-y-5">
+          <div class="bg-white rounded-3xl p-5 border border-stone-200 shadow-xs space-y-3">
+            <h3 class="text-base font-extrabold text-stone-900">Configuración de Caja y CoDi®</h3>
+            <form onsubmit="guardarConfiguracionNegocio(event)" class="space-y-3 text-xs">
+              <div>
+                <label class="block font-bold text-stone-700 mb-1">Nombre del Negocio</label>
+                <input type="text" id="cfg-nombre-negocio" required class="w-full rounded-xl border border-stone-300 bg-stone-50 px-3 py-2 font-semibold outline-none" />
+              </div>
+              <div>
+                <label class="block font-bold text-stone-700 mb-1">Tipo de Cambio (MXN por 1 USD)</label>
+                <input type="number" id="cfg-tipo-cambio" required min="1" step="0.01" class="w-full rounded-xl border border-stone-300 bg-stone-50 px-3 py-2 font-semibold outline-none" />
+              </div>
+              <div>
+                <label class="block font-bold text-stone-700 mb-1">CLABE o Dato de Cobro CoDi® (Para QR sin comisión)</label>
+                <input type="text" id="cfg-codi-clabe" placeholder="Ej. 012180001234567890 · MERAKI STUDIO" class="w-full rounded-xl border border-stone-300 bg-stone-50 px-3 py-2 font-semibold outline-none" />
+              </div>
+              <button type="submit" class="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold cursor-pointer">
+                Guardar Configuración
+              </button>
+            </form>
+          </div>
+
+          <!-- Respaldo Portátil USB / Dropbox / Drive -->
+          <div class="bg-white rounded-3xl p-5 border border-stone-200 shadow-xs space-y-3">
+            <h3 class="text-base font-extrabold text-stone-900">Sincronización y Respaldo de Archivo</h3>
+            <p class="text-xs text-stone-600 leading-relaxed">
+              Guarda una copia de seguridad en tu carpeta de Google Drive, Dropbox o memoria USB para llevar tus datos a cualquier computadora.
+            </p>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <button type="button" onclick="exportarRespaldoJSON()"
+                      class="py-2.5 px-3 rounded-xl bg-blue-900 hover:bg-blue-950 text-white text-xs font-extrabold cursor-pointer">
+                ⬇ Guardar Respaldo (.JSON)
+              </button>
+              <label class="py-2.5 px-3 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-800 border border-stone-300 text-xs font-extrabold text-center cursor-pointer">
+                ⬆ Cargar Respaldo (.JSON)
+                <input type="file" accept=".json" onchange="importarRespaldoJSON(event)" class="hidden" />
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Catálogo de Servicios y Precios (Visible solo para Admin/Caja, oculto para Especialistas) -->
+      <div class="bg-white rounded-3xl p-5 border border-stone-200 shadow-xs space-y-4">
+        <div>
+          <h3 class="text-lg font-extrabold text-stone-900">Catálogo de Servicios y Precios</h3>
+          <p class="text-xs text-stone-500">Los especialistas ven el nombre y duración del servicio; los precios solo aparecen en Caja y Administración.</p>
+        </div>
+
+        <form onsubmit="guardarServicioCatalogo(event)" class="grid grid-cols-1 sm:grid-cols-12 gap-2.5 bg-stone-50 p-3.5 rounded-2xl border border-stone-200">
+          <input type="text" id="srv-nombre" required placeholder="Nombre del servicio (ej. Masaje Relajante 40 min)"
+                 class="sm:col-span-5 rounded-xl border border-stone-300 bg-white px-3 py-2 text-xs font-semibold outline-none" />
+          <input type="text" id="srv-categoria" required placeholder="Categoría (ej. Spa / Uñas)"
+                 class="sm:col-span-3 rounded-xl border border-stone-300 bg-white px-3 py-2 text-xs font-semibold outline-none" />
+          <input type="number" id="srv-precio" required min="0" step="any" placeholder="Precio MXN"
+                 class="sm:col-span-2 rounded-xl border border-stone-300 bg-white px-3 py-2 text-xs font-semibold outline-none" />
+          <button type="submit" class="sm:col-span-2 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-extrabold cursor-pointer">
+            + Agregar
+          </button>
+        </form>
+
+        <div id="admin-servicios-list" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5"></div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- MODAL 1: CHECADOR DE TIEMPO CON DESCANSO POR PIN -->
+  <div id="modal-checador" class="fixed inset-0 z-50 hidden bg-stone-950/75 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-md w-full border border-stone-200 shadow-2xl overflow-hidden">
+      <div class="bg-stone-900 text-white px-5 py-4 flex items-center justify-between">
+        <div>
+          <span class="text-[10px] font-extrabold uppercase tracking-wider text-amber-400">Control de Asistencia</span>
+          <h3 class="text-lg font-extrabold">Checador por PIN</h3>
+        </div>
+        <button type="button" onclick="cerrarChecadorModal()" class="text-stone-400 hover:text-white font-bold cursor-pointer">✕</button>
+      </div>
+      <div class="p-5 space-y-4">
+        <div>
+          <label for="checador-pin-input" class="block text-xs font-bold text-stone-700 mb-1">Ingresa tu PIN de empleado</label>
+          <input type="password" id="checador-pin-input" maxlength="6" placeholder="••••"
+                 class="w-full rounded-2xl border-2 border-stone-300 bg-stone-50 px-4 py-3 text-center text-xl font-extrabold tracking-[0.4em] outline-none focus:border-amber-500" />
+        </div>
+
+        <div class="grid grid-cols-2 gap-2.5">
+          <button type="button" onclick="registrarMarcaChecador('entrada')" class="py-3 px-3 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-extrabold cursor-pointer">
+            ▶ Entrada
+          </button>
+          <button type="button" onclick="registrarMarcaChecador('salida_descanso')" class="py-3 px-3 rounded-2xl bg-amber-500 hover:bg-amber-600 text-stone-950 text-xs sm:text-sm font-extrabold cursor-pointer">
+            ☕ Salida a Descanso
+          </button>
+          <button type="button" onclick="registrarMarcaChecador('regreso_descanso')" class="py-3 px-3 rounded-2xl bg-blue-700 hover:bg-blue-800 text-white text-xs sm:text-sm font-extrabold cursor-pointer">
+            ↺ Regreso Descanso
+          </button>
+          <button type="button" onclick="registrarMarcaChecador('salida')" class="py-3 px-3 rounded-2xl bg-rose-600 hover:bg-rose-700 text-white text-xs sm:text-sm font-extrabold cursor-pointer">
+            ■ Salida Turno
+          </button>
+        </div>
+
+        <div id="checador-estado-hoy" class="bg-stone-50 rounded-2xl p-3 border border-stone-200 text-xs text-stone-600 space-y-1 max-h-40 overflow-y-auto"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 2: COBRO EN CAJA (Efectivo MXN/USD, Tarjeta, Transferencia, Mixto, CoDi QR y Propinas Flexibles) -->
+  <div id="modal-cobro" class="fixed inset-0 z-50 hidden bg-stone-950/75 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
+    <div class="bg-white rounded-3xl max-w-xl w-full border border-stone-200 shadow-2xl overflow-hidden my-4">
+      <div class="bg-emerald-900 text-white px-5 py-4 flex items-center justify-between">
+        <div>
+          <span class="text-[10px] font-extrabold uppercase tracking-wider text-emerald-300">Registradora Meraki</span>
+          <h3 id="cobro-modal-title" class="text-lg font-extrabold">Cobrar Servicio</h3>
+        </div>
+        <button type="button" onclick="cerrarModalCobro()" class="text-emerald-200 hover:text-white font-bold cursor-pointer">✕</button>
+      </div>
+
+      <form onsubmit="confirmarCobroTicket(event)" class="p-5 space-y-4 text-xs sm:text-sm">
+        <input type="hidden" id="cobro-item-id" />
+        <input type="hidden" id="cobro-empleado-id" />
+
+        <!-- Resumen de cliente y servicio -->
+        <div class="bg-stone-50 rounded-2xl p-3.5 border border-stone-200 flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <p id="cobro-cliente-info" class="font-extrabold text-stone-900">Cliente</p>
+            <p id="cobro-servicio-info" class="text-xs text-stone-600">Servicio · Especialista</p>
+          </div>
+          <div class="text-right">
+            <span class="text-[11px] text-stone-500 block">Precio Servicio</span>
+            <input type="number" id="cobro-precio-base" required min="0" step="any" oninput="recalcularTotalCobro()"
+                   class="w-28 text-right rounded-xl border border-stone-300 bg-white px-2.5 py-1 font-extrabold text-stone-900 outline-none" />
+          </div>
+        </div>
+
+        <!-- Adelanto previo si existiera -->
+        <div id="cobro-adelanto-row" class="hidden bg-amber-50 border border-amber-200 rounded-xl px-3 py-2 flex items-center justify-between text-xs">
+          <span class="font-bold text-amber-900">Adelanto ya pagado previamente:</span>
+          <strong id="cobro-adelanto-monto" class="text-amber-900">-$0.00</strong>
+        </div>
+
+        <!-- Propina flexible (Rápida, % o cantidad libre, 100% para quien atendió) -->
+        <div class="space-y-2">
+          <div class="flex items-center justify-between">
+            <label class="font-extrabold text-stone-800">Propina (100% para especialista)</label>
+            <span id="cobro-propina-calculada" class="font-extrabold text-purple-700">$0.00 MXN</span>
+          </div>
+          <div class="grid grid-cols-5 gap-1.5">
+            <button type="button" onclick="seleccionarPropinaRapida('ninguna', 0)" class="py-2 rounded-xl bg-stone-100 hover:bg-stone-200 text-xs font-bold cursor-pointer">Sin</button>
+            <button type="button" onclick="seleccionarPropinaRapida('pct', 10)" class="py-2 rounded-xl bg-stone-100 hover:bg-stone-200 text-xs font-bold cursor-pointer">10%</button>
+            <button type="button" onclick="seleccionarPropinaRapida('pct', 15)" class="py-2 rounded-xl bg-stone-100 hover:bg-stone-200 text-xs font-bold cursor-pointer">15%</button>
+            <button type="button" onclick="seleccionarPropinaRapida('pct', 20)" class="py-2 rounded-xl bg-stone-100 hover:bg-stone-200 text-xs font-bold cursor-pointer">20%</button>
+            <input type="number" id="cobro-propina-libre" min="0" step="any" placeholder="$ Libre" oninput="seleccionarPropinaLibre(this.value)"
+                   class="rounded-xl border border-stone-300 bg-white px-2 py-1.5 text-center text-xs font-bold outline-none focus:border-purple-600" />
+          </div>
+        </div>
+
+        <!-- Total a cobrar en pantalla grande -->
+        <div class="bg-stone-900 text-white rounded-2xl p-4 flex items-center justify-between">
+          <div>
+            <span class="text-[11px] uppercase tracking-wider text-stone-400 block">Total a Cobrar</span>
+            <span id="cobro-total-usd-ref" class="text-xs text-amber-300 font-semibold">≈ $0.00 USD</span>
+          </div>
+          <span id="cobro-total-mxn" class="text-3xl font-extrabold text-emerald-400">$0.00</span>
+        </div>
+
+        <!-- Método de pago -->
+        <div class="space-y-2">
+          <label class="block font-extrabold text-stone-800">Método de Pago</label>
+          <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+            <label class="flex items-center gap-2 p-2.5 rounded-xl border border-stone-300 cursor-pointer has-[:checked]:border-emerald-600 has-[:checked]:bg-emerald-50 font-bold text-xs">
+              <input type="radio" name="metodo_pago" value="efectivo_mxn" checked onchange="cambiarMetodoPagoUI()" />
+              <span>💵 Efectivo MXN</span>
+            </label>
+            <label class="flex items-center gap-2 p-2.5 rounded-xl border border-stone-300 cursor-pointer has-[:checked]:border-emerald-600 has-[:checked]:bg-emerald-50 font-bold text-xs">
+              <input type="radio" name="metodo_pago" value="efectivo_usd" onchange="cambiarMetodoPagoUI()" />
+              <span>🇺🇸 Efectivo USD</span>
+            </label>
+            <label class="flex items-center gap-2 p-2.5 rounded-xl border border-stone-300 cursor-pointer has-[:checked]:border-blue-600 has-[:checked]:bg-blue-50 font-bold text-xs">
+              <input type="radio" name="metodo_pago" value="codi" onchange="cambiarMetodoPagoUI()" />
+              <span>📲 CoDi® QR</span>
+            </label>
+            <label class="flex items-center gap-2 p-2.5 rounded-xl border border-stone-300 cursor-pointer has-[:checked]:border-blue-600 has-[:checked]:bg-blue-50 font-bold text-xs">
+              <input type="radio" name="metodo_pago" value="tarjeta" onchange="cambiarMetodoPagoUI()" />
+              <span>💳 Tarjeta</span>
+            </label>
+            <label class="flex items-center gap-2 p-2.5 rounded-xl border border-stone-300 cursor-pointer has-[:checked]:border-blue-600 has-[:checked]:bg-blue-50 font-bold text-xs">
+              <input type="radio" name="metodo_pago" value="transferencia" onchange="cambiarMetodoPagoUI()" />
+              <span>🏦 Transferencia</span>
+            </label>
+            <label class="flex items-center gap-2 p-2.5 rounded-xl border border-stone-300 cursor-pointer has-[:checked]:border-amber-600 has-[:checked]:bg-amber-50 font-bold text-xs">
+              <input type="radio" name="metodo_pago" value="mixto" onchange="cambiarMetodoPagoUI()" />
+              <span>🔀 Pago Mixto</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Panel dinámico para CoDi QR -->
+        <div id="panel-pago-codi" class="hidden bg-blue-50 border border-blue-200 rounded-2xl p-4 text-center space-y-2">
+          <span class="inline-block px-2.5 py-0.5 rounded-full bg-blue-900 text-white text-[10px] font-extrabold uppercase">
+            Cobro Digital CoDi® · Sin Comisión
+          </span>
+          <p class="text-xs text-blue-950 font-bold">Muestra este QR a la clienta para escanear desde su app bancaria:</p>
+          <div class="inline-block bg-white p-2.5 rounded-2xl border-2 border-blue-900 shadow-xs">
+            <img id="codi-qr-img" src="" alt="Código QR CoDi" class="w-36 h-36 mx-auto" />
+          </div>
+          <p id="codi-clabe-display" class="text-[11px] font-mono font-bold text-blue-900"></p>
+          <p class="text-[11px] text-blue-700">Al recibir la notificación bancaria, presiona "Confirmar Cobro".</p>
+        </div>
+
+        <!-- Panel dinámico para Pago Mixto -->
+        <div id="panel-pago-mixto" class="hidden bg-amber-50 border border-amber-200 rounded-2xl p-3.5 grid grid-cols-2 gap-3 text-xs">
+          <div>
+            <label class="block font-bold text-stone-700 mb-1">Parte en Efectivo (MXN)</label>
+            <input type="number" id="mixto-efectivo" min="0" step="any" value="0" class="w-full rounded-xl border border-stone-300 bg-white px-3 py-2 font-bold outline-none" />
+          </div>
+          <div>
+            <label class="block font-bold text-stone-700 mb-1">Parte Digital / Tarjeta (MXN)</label>
+            <input type="number" id="mixto-digital" min="0" step="any" value="0" class="w-full rounded-xl border border-stone-300 bg-white px-3 py-2 font-bold outline-none" />
+          </div>
+        </div>
+
+        <div class="flex justify-end gap-2 pt-2">
+          <button type="button" onclick="cerrarModalCobro()" class="px-4 py-2.5 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-700 font-bold cursor-pointer">
+            Cancelar
+          </button>
+          <button type="submit" class="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold shadow-md cursor-pointer">
+            ✓ Confirmar Cobro
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL 3: AGENDAR / REAGENDAR CITA Y ADELANTO -->
+  <div id="modal-cita" class="fixed inset-0 z-50 hidden bg-stone-950/75 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-md w-full border border-stone-200 shadow-2xl overflow-hidden">
+      <div class="bg-stone-900 text-white px-5 py-4 flex items-center justify-between">
+        <h3 id="cita-modal-title" class="text-base font-extrabold">Agendar / Editar Cita</h3>
+        <button type="button" onclick="cerrarModalCita()" class="text-stone-400 hover:text-white font-bold cursor-pointer">✕</button>
+      </div>
+      <form onsubmit="guardarCitaForm(event)" class="p-5 space-y-3 text-xs sm:text-sm">
+        <input type="hidden" id="cita-edit-id" />
+        <div>
+          <label class="block text-xs font-bold text-stone-700 mb-1">Nombre de la Clienta / Cliente</label>
+          <input type="text" id="cita-cliente" required placeholder="Ej. Valeria Montes"
+                 class="w-full rounded-xl border border-stone-300 bg-stone-50 px-3 py-2 outline-none focus:border-emerald-600" />
+        </div>
+        <div class="grid grid-cols-2 gap-2.5">
+          <div>
+            <label class="block text-xs font-bold text-stone-700 mb-1">Fecha</label>
+            <input type="date" id="cita-fecha" required
+                   class="w-full rounded-xl border border-stone-300 bg-stone-50 px-3 py-2 outline-none focus:border-emerald-600" />
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-stone-700 mb-1">Hora</label>
+            <input type="time" id="cita-hora" required value="11:00"
+                   class="w-full rounded-xl border border-stone-300 bg-stone-50 px-3 py-2 outline-none focus:border-emerald-600" />
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-stone-700 mb-1">Especialista Asignada</label>
+          <select id="cita-especialista" required class="w-full rounded-xl border border-stone-300 bg-stone-50 px-3 py-2 font-semibold outline-none"></select>
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-stone-700 mb-1">Servicio</label>
+          <select id="cita-servicio" required class="w-full rounded-xl border border-stone-300 bg-stone-50 px-3 py-2 font-semibold outline-none"></select>
+        </div>
+        <div id="cita-adelanto-wrapper">
+          <label class="block text-xs font-bold text-stone-700 mb-1">Adelanto / Anticipo recibido en caja (MXN)</label>
+          <input type="number" id="cita-adelanto" min="0" step="any" value="0"
+                 class="w-full rounded-xl border border-stone-300 bg-stone-50 px-3 py-2 font-semibold outline-none" />
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-stone-700 mb-1">Notas técnicas (sin precios)</label>
+          <input type="text" id="cita-notas" placeholder="Ej. Piel sensible / Diseño natural"
+                 class="w-full rounded-xl border border-stone-300 bg-stone-50 px-3 py-2 outline-none" />
+        </div>
+        <div class="flex justify-end gap-2 pt-2">
+          <button type="button" onclick="cerrarModalCita()" class="px-4 py-2 rounded-xl bg-stone-100 text-stone-700 font-bold cursor-pointer">Cancelar</button>
+          <button type="submit" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold cursor-pointer">Guardar Cita</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const STORAGE_KEY = "meraki_portable_pos_state_v1";
+
+    function hoyISO() {
+      const d = new Date();
+      return d.toISOString().slice(0, 10);
+    }
+
+    function horaActual() {
+      const d = new Date();
+      return d.toTimeString().slice(0, 5);
+    }
+
+    const DEFAULT_STATE = {
+      config: {
+        businessName: "Meraki Studio",
+        exchangeRate: 19.50,
+        codiClabe: "012180001234567890 · MERAKI STUDIO"
+      },
+      employees: [
+        { id: "emp-sofia", name: "Sofía (Spa)", pin: "1111", role: "especialista", payType: "porcentaje", payValue: 40 },
+        { id: "emp-camila", name: "Camila (Uñas)", pin: "2222", role: "especialista", payType: "hora", payValue: 95 },
+        { id: "emp-tia", name: "Tía (Caja)", pin: "3333", role: "caja", payType: "dia", payValue: 550 },
+        { id: "emp-hermana", name: "Hermana (Dueña)", pin: "9999", role: "duena", payType: "porcentaje", payValue: 0 },
+        { id: "emp-admin", name: "Admin Sistema", pin: "0000", role: "admin", payType: "porcentaje", payValue: 0 }
+      ],
+      services: [
+        { id: "srv-1", name: "Masaje Relajante 40 min", category: "Spa & Masajes", price: 650 },
+        { id: "srv-2", name: "Drenaje Linfático Manual", category: "Spa & Masajes", price: 850 },
+        { id: "srv-3", name: "Limpieza Facial Profunda", category: "Faciales", price: 700 },
+        { id: "srv-4", name: "Pestañas Clásicas / Hawaianas", category: "Mirada", price: 750 },
+        { id: "srv-5", name: "Manicura Rusa + Gel", category: "Uñas", price: 480 },
+        { id: "srv-6", name: "Pedicura Spa con Gelish", category: "Pies", price: 520 }
+      ],
+      appointments: [
+        {
+          id: "cit-101",
+          client: "Fernanda Ríos",
+          date: hoyISO(),
+          time: "10:30",
+          employeeId: "emp-sofia",
+          serviceId: "srv-1",
+          advancePaid: 200,
+          notes: "Prefiere aroma lavanda y presión media",
+          status: "agendada"
+        },
+        {
+          id: "cit-102",
+          client: "Daniela Cruz",
+          date: hoyISO(),
+          time: "12:00",
+          employeeId: "emp-camila",
+          serviceId: "srv-5",
+          advancePaid: 0,
+          notes: "Tono nude natural",
+          status: "agendada"
+        }
+      ],
+      readyToPay: [
+        {
+          id: "cola-201",
+          client: "Andrea Lozano",
+          employeeId: "emp-sofia",
+          serviceId: "srv-3",
+          serviceName: "Limpieza Facial Profunda",
+          price: 700,
+          advancePaid: 0,
+          finishedAt: "09:45"
+        }
+      ],
+      tickets: [
+        {
+          id: "tck-501",
+          date: hoyISO(),
+          time: "09:15",
+          client: "Paola Méndez",
+          employeeId: "emp-sofia",
+          serviceName: "Masaje Relajante 40 min",
+          serviceAmount: 650,
+          tipAmount: 100,
+          method: "codi",
+          cashMxn: 0,
+          digitalMxn: 750
+        }
+      ],
+      expenses: [],
+      timeLogs: [
+        {
+          id: "log-1",
+          employeeId: "emp-sofia",
+          date: hoyISO(),
+          type: "entrada",
+          time: "08:55"
+        }
+      ],
+      weeklyPayrollStatus: {}
+    };
+
+    let appState = null;
+    let currentUser = null;
+    let pinBuffer = "";
+    let activeModule = "";
+    let currentTipMode = "ninguna";
+    let currentTipValue = 0;
+
+    function loadState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) {
+          appState = JSON.parse(JSON.stringify(DEFAULT_STATE));
+          saveState();
+          return;
+        }
+        const parsed = JSON.parse(raw);
+        appState = Object.assign({}, JSON.parse(JSON.stringify(DEFAULT_STATE)), parsed);
+      } catch (e) {
+        appState = JSON.parse(JSON.stringify(DEFAULT_STATE));
+      }
+    }
+
+    function saveState() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+      } catch (e) {
+        console.error("Error guardando estado local:", e);
+      }
+    }
+
+    function showToast(msg, type = "ok") {
+      const box = document.getElementById("toast-box");
+      if (!box) return;
+      box.textContent = msg;
+      box.className = "fixed bottom-4 right-4 z-50 max-w-sm rounded-2xl px-4 py-3 text-xs sm:text-sm font-bold shadow-2xl border transition-all " +
+        (type === "error"
+          ? "bg-rose-950 text-rose-100 border-rose-700"
+          : "bg-stone-900 text-white border-emerald-500/50");
+      box.classList.remove("hidden");
+      clearTimeout(window.__toastTimer);
+      window.__toastTimer = setTimeout(() => box.classList.add("hidden"), 3400);
+    }
+
+    function formatMoney(num) {
+      return "$" + Number(num || 0).toLocaleString("es-MX", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    function escapeHtml(str) {
+      return String(str || "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+    }
+
+    // --- LÓGICA DE LOGIN POR PIN ---
+    function renderDemoPins() {
+      const container = document.getElementById("demo-pins-list");
+      if (!container) return;
+      container.innerHTML = appState.employees.map(emp => `
+        <button type="button" onclick="accesoRapidoDemo('${escapeHtml(emp.pin)}')"
+                class="flex items-center justify-between p-3 rounded-2xl bg-stone-50 hover:bg-emerald-50 border border-stone-200 hover:border-emerald-300 text-left transition cursor-pointer">
+          <div>
+            <span class="block text-xs font-extrabold text-stone-900">${escapeHtml(emp.name)}</span>
+            <span class="block text-[10px] uppercase font-bold text-stone-500">${escapeHtml(emp.role)}</span>
+          </div>
+          <span class="px-2.5 py-1 rounded-xl bg-stone-900 text-amber-300 font-mono text-xs font-extrabold">
+            ${escapeHtml(emp.pin)}
+          </span>
+        </button>
+      `).join("");
+    }
+
+    function agregarDigitoPin(digito) {
+      if (pinBuffer.length >= 6) return;
+      pinBuffer += digito;
+      actualizarVisorPin();
+    }
+
+    function limpiarPinInput() {
+      pinBuffer = "";
+      document.getElementById("pin-error-msg").classList.add("hidden");
+      actualizarVisorPin();
+    }
+
+    function actualizarVisorPin() {
+      const display = document.getElementById("pin-display");
+      if (!pinBuffer) {
+        display.innerHTML = '<span class="text-stone-400 text-sm tracking-normal font-semibold">••••</span>';
+      } else {
+        display.textContent = "•".repeat(pinBuffer.length);
+      }
+    }
+
+    function accesoRapidoDemo(pin) {
+      pinBuffer = pin;
+      validarAccesoPin();
+    }
+
+    function validarAccesoPin() {
+      const found = appState.employees.find(e => String(e.pin) === String(pinBuffer));
+      if (!found) {
+        document.getElementById("pin-error-msg").classList.remove("hidden");
+        pinBuffer = "";
+        actualizarVisorPin();
+        return;
+      }
+
+      currentUser = found;
+      pinBuffer = "";
+      actualizarVisorPin();
+      document.getElementById("pin-error-msg").classList.add("hidden");
+
+      document.getElementById("view-login").classList.add("hidden");
+      document.getElementById("view-app").classList.remove("hidden");
+      document.getElementById("active-user-pill").classList.remove("hidden");
+      document.getElementById("active-user-pill").classList.add("flex");
+      document.getElementById("btn-logout").classList.remove("hidden");
+
+      document.getElementById("active-user-name").textContent = found.name;
+      document.getElementById("active-user-role").textContent = found.role;
+
+      configurarNavegacionPorRol(found.role);
+      showToast(`Bienvenido(a), ${found.name}`);
+    }
+
+    function cerrarSesionPin() {
+      currentUser = null;
+      pinBuffer = "";
+      actualizarVisorPin();
+      document.getElementById("view-app").classList.add("hidden");
+      document.getElementById("view-login").classList.remove("hidden");
+      document.getElementById("active-user-pill").classList.add("hidden");
+      document.getElementById("active-user-pill").classList.remove("flex");
+      document.getElementById("btn-logout").classList.add("hidden");
+      renderDemoPins();
+    }
+
+    function configurarNavegacionPorRol(role) {
+      const nav = document.getElementById("role-nav-tabs");
+      const allowedTabs = [];
+
+      if (role === "especialista") {
+        allowedTabs.push({ id: "especialista", label: "✨ Mis Citas y Ganancias" });
+      } else if (role === "caja") {
+        allowedTabs.push({ id: "caja", label: "💵 Registradora y Calendario" });
+      } else if (role === "duena") {
+        allowedTabs.push({ id: "dashboard", label: "📊 Dashboard Contable y Corte" });
+        allowedTabs.push({ id: "caja", label: "💵 Caja y Calendario" });
+        allowedTabs.push({ id: "admin", label: "⚙ Administración" });
+      } else {
+        allowedTabs.push({ id: "admin", label: "⚙ Administración" });
+        allowedTabs.push({ id: "dashboard", label: "📊 Dashboard Contable" });
+        allowedTabs.push({ id: "caja", label: "💵 Caja y Calendario" });
+        allowedTabs.push({ id: "especialista", label: "✨ Vista Especialista" });
+      }
+
+      nav.innerHTML = allowedTabs.map(t => `
+        <button type="button" id="nav-tab-${t.id}" onclick="mostrarModulo('${t.id}')"
+                class="px-4 py-2.5 rounded-xl text-xs sm:text-sm font-extrabold transition cursor-pointer">
+          ${t.label}
+        </button>
+      `).join("");
+
+      mostrarModulo(allowedTabs[0].id);
+    }
+
+    function mostrarModulo(modId) {
+      activeModule = modId;
+      ["especialista", "caja", "dashboard", "admin"].forEach(id => {
+        const sec = document.getElementById(`mod-${id}`);
+        const btn = document.getElementById(`nav-tab-${id}`);
+        if (sec) sec.classList.toggle("hidden", id !== modId);
+        if (btn) {
+          btn.className = id === modId
+            ? "px-4 py-2.5 rounded-xl bg-stone-900 text-white text-xs sm:text-sm font-extrabold shadow-xs transition cursor-pointer"
+            : "px-4 py-2.5 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-700 text-xs sm:text-sm font-bold transition cursor-pointer";
+        }
+      });
+
+      if (modId === "especialista") renderizarVistaEspecialista();
+      if (modId === "caja") renderizarCaja();
+      if (modId === "dashboard") {
+        if (!document.getElementById("dash-fecha-inicio").value) {
+          aplicarFiltroRapidoDashboard("semana");
+        } else {
+          renderizarDashboard();
+        }
+      }
+      if (modId === "admin") renderizarAdmin();
+    }
+
+    // --- CÁLCULO DE HORAS EFECTIVAS DEL CHECADOR ---
+    function calcularHorasTrabajadas(employeeId, fechaInicio, fechaFin) {
+      const logs = appState.timeLogs
+        .filter(l => l.employeeId === employeeId && l.date >= fechaInicio && l.date <= fechaFin)
+        .sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time));
+
+      const byDate = {};
+      logs.forEach(l => {
+        if (!byDate[l.date]) byDate[l.date] = [];
+        byDate[l.date].push(l);
+      });
+
+      let totalMinutes = 0;
+      let diasConAsistencia = 0;
+
+      Object.keys(byDate).forEach(date => {
+        const dayLogs = byDate[date];
+        if (dayLogs.length > 0) diasConAsistencia++;
+        let activeStart = null;
+
+        dayLogs.forEach(ev => {
+          const [hh, mm] = ev.time.split(":").map(Number);
+          const mins = hh * 60 + mm;
+
+          if (ev.type === "entrada" || ev.type === "regreso_descanso") {
+            if (activeStart === null) activeStart = mins;
+          } else if (ev.type === "salida_descanso" || ev.type === "salida") {
+            if (activeStart !== null && mins >= activeStart) {
+              totalMinutes += (mins - activeStart);
+              activeStart = null;
+            }
+          }
+        });
+
+        // Si sigue en turno activo hoy, suma hasta la hora actual
+        if (activeStart !== null && date === hoyISO()) {
+          const now = new Date();
+          const nowMins = now.getHours() * 60 + now.getMinutes();
+          if (nowMins > activeStart) {
+            totalMinutes += (nowMins - activeStart);
+          }
+        }
+      });
+
+      return {
+        hours: Number((totalMinutes / 60).toFixed(2)),
+        days: diasConAsistencia
+      };
+    }
+
+    function obtenerRangoSemanaActual() {
+      const hoy = new Date();
+      const day = hoy.getDay(); // 0 dom .. 6 sab
+      const diffToMon = (day === 0 ? -6 : 1 - day);
+      const monday = new Date(hoy);
+      monday.setDate(hoy.getDate() + diffToMon);
+      const sunday = new Date(monday);
+      sunday.setDate(monday.getDate() + 6);
+      return {
+        start: monday.toISOString().slice(0, 10),
+        end: sunday.toISOString().slice(0, 10)
+      };
+    }
+
+    function calcularGananciaEmpleado(emp, fechaInicio, fechaFin) {
+      const ticketsEmp = appState.tickets.filter(
+        t => t.employeeId === emp.id && t.date >= fechaInicio && t.date <= fechaFin
+      );
+
+      const ventasServicios = ticketsEmp.reduce((acc, t) => acc + Number(t.serviceAmount || 0), 0);
+      const propinas = ticketsEmp.reduce((acc, t) => acc + Number(t.tipAmount || 0), 0);
+      const asistencia = calcularHorasTrabajadas(emp.id, fechaInicio, fechaFin);
+
+      let pagoBase = 0;
+      if (emp.payType === "porcentaje") {
+        pagoBase = ventasServicios * (Number(emp.payValue || 0) / 100);
+      } else if (emp.payType === "hora") {
+        pagoBase = asistencia.hours * Number(emp.payValue || 0);
+      } else if (emp.payType === "dia") {
+        pagoBase = asistencia.days * Number(emp.payValue || 0);
+      }
+
+      return {
+        ventasServicios,
+        pagoBase,
+        propinas,
+        totalPagar: pagoBase + propinas,
+        hours: asistencia.hours,
+        days: asistencia.days
+      };
+    }
+
+    // --- VISTA ESPECIALISTA (SIN PRECIOS PREVIOS) ---
+    function renderizarVistaEspecialista() {
+      const targetEmp = currentUser.role === "especialista"
+        ? currentUser
+        : (appState.employees.find(e => e.role === "especialista") || currentUser);
+
+      const hoy = hoyISO();
+      const semana = obtenerRangoSemanaActual();
+
+      // Citas agendadas del especialista (SIN mostrar precios ni adelantos)
+      const citas = appState.appointments.filter(
+        a => a.employeeId === targetEmp.id && a.status === "agendada"
+      );
+      const citasEl = document.getElementById("esp-citas-list");
+      if (citas.length === 0) {
+        citasEl.innerHTML = '<p class="text-xs text-stone-500 py-4 text-center">No tienes citas pendientes en este momento.</p>';
+      } else {
+        citasEl.innerHTML = citas.map(c => {
+          const srv = appState.services.find(s => s.id === c.serviceId);
+          return `
+            <div class="p-4 rounded-2xl bg-stone-50 border border-stone-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div class="space-y-1">
+                <div class="flex items-center gap-2">
+                  <span class="px-2.5 py-0.5 rounded-full bg-stone-900 text-amber-300 text-xs font-extrabold">${escapeHtml(c.time)}</span>
+                  <span class="text-xs font-bold text-stone-500">${escapeHtml(c.date)}</span>
+                </div>
+                <h3 class="text-base font-extrabold text-stone-900">${escapeHtml(c.client)}</h3>
+                <p class="text-xs font-bold text-emerald-700">${escapeHtml(srv ? srv.name : "Servicio asignado")}</p>
+                ${c.notes ? `<p class="text-xs text-stone-600">Nota: ${escapeHtml(c.notes)}</p>` : ""}
+              </div>
+              <button type="button" onclick="marcarCitaTerminada('${escapeHtml(c.id)}')"
+                      class="px-4 py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white text-xs sm:text-sm font-extrabold shadow-md transition cursor-pointer shrink-0">
+                ✓ Terminado → Caja
+              </button>
+            </div>
+          `;
+        }).join("");
+      }
+
+      // Servicios rápidos sin mostrar precios
+      const srvEl = document.getElementById("esp-servicios-rapidos");
+      srvEl.innerHTML = appState.services.map(s => `
+        <button type="button" onclick="enviarServicioRapidoACaja('${escapeHtml(targetEmp.id)}', '${escapeHtml(s.id)}')"
+                class="p-3.5 rounded-2xl bg-stone-50 hover:bg-emerald-50 border border-stone-200 hover:border-emerald-300 text-left flex items-center justify-between gap-2 transition cursor-pointer">
+          <div>
+            <span class="block text-[10px] font-extrabold uppercase text-stone-400">${escapeHtml(s.category)}</span>
+            <span class="block text-xs sm:text-sm font-extrabold text-stone-900">${escapeHtml(s.name)}</span>
+          </div>
+          <span class="px-2.5 py-1 rounded-xl bg-emerald-600 text-white text-[11px] font-extrabold shrink-0">
+            Terminado
+          </span>
+        </button>
+      `).join("");
+
+      // Transparencia en "Mis Ganancias"
+      const esquemaTxt = targetEmp.payType === "porcentaje"
+        ? `${targetEmp.payValue}% comisión`
+        : targetEmp.payType === "hora"
+          ? `$${targetEmp.payValue}/hr`
+          : `$${targetEmp.payValue}/día`;
+      document.getElementById("esp-esquema-badge").textContent = esquemaTxt;
+
+      const ganHoy = calcularGananciaEmpleado(targetEmp, hoy, hoy);
+      const ganSem = calcularGananciaEmpleado(targetEmp, semana.start, semana.end);
+
+      document.getElementById("esp-ganancia-hoy-total").textContent = formatMoney(ganHoy.totalPagar);
+      document.getElementById("esp-ganancia-hoy-base").textContent = formatMoney(ganHoy.pagoBase);
+      document.getElementById("esp-ganancia-hoy-propinas").textContent = formatMoney(ganHoy.propinas);
+
+      document.getElementById("esp-ganancia-sem-total").textContent = formatMoney(ganSem.totalPagar);
+      document.getElementById("esp-ganancia-sem-base").textContent = formatMoney(ganSem.pagoBase);
+      document.getElementById("esp-ganancia-sem-propinas").textContent = formatMoney(ganSem.propinas);
+
+      const pendientesCobro = appState.readyToPay.filter(r => r.employeeId === targetEmp.id).length;
+      document.getElementById("esp-pendientes-cobro-count").textContent = pendientesCobro;
+      document.getElementById("esp-horas-hoy").textContent = `${ganHoy.hours} hrs`;
+
+      // Historial de servicios de hoy
+      const histEl = document.getElementById("esp-historial-hoy");
+      const cobradosHoy = appState.tickets.filter(t => t.employeeId === targetEmp.id && t.date === hoy);
+      if (cobradosHoy.length === 0) {
+        histEl.innerHTML = '<p class="text-stone-500">Aún no hay servicios liquidados en caja hoy.</p>';
+      } else {
+        histEl.innerHTML = cobradosHoy.map(t => `
+          <div class="p-2.5 rounded-xl bg-stone-50 border border-stone-200 flex items-center justify-between">
+            <div>
+              <strong class="text-stone-900">${escapeHtml(t.serviceName)}</strong>
+              <span class="block text-[11px] text-stone-500">${escapeHtml(t.client)} · ${escapeHtml(t.time)}</span>
+            </div>
+            <span class="text-amber-700 font-extrabold">Propina: ${formatMoney(t.tipAmount)}</span>
+          </div>
+        `).join("");
+      }
+    }
+
+    function marcarCitaTerminada(citaId) {
+      const idx = appState.appointments.findIndex(a => a.id === citaId);
+      if (idx === -1) return;
+      const cita = appState.appointments[idx];
+      const srv = appState.services.find(s => s.id === cita.serviceId);
+
+      cita.status = "en_caja";
+      appState.readyToPay.unshift({
+        id: "cola-" + Date.now(),
+        client: cita.client,
+        employeeId: cita.employeeId,
+        serviceId: cita.serviceId,
+        serviceName: srv ? srv.name : "Servicio",
+        price: srv ? Number(srv.price) : 0,
+        advancePaid: Number(cita.advancePaid || 0),
+        finishedAt: horaActual()
+      });
+
+      saveState();
+      renderizarVistaEspecialista();
+      showToast("✓ Servicio marcado terminado y enviado directo a Caja.");
+    }
+
+    function enviarServicioRapidoACaja(employeeId, serviceId) {
+      const srv = appState.services.find(s => s.id === serviceId);
+      if (!srv) return;
+      appState.readyToPay.unshift({
+        id: "cola-" + Date.now(),
+        client: "Clienta en Salón",
+        employeeId: employeeId,
+        serviceId: srv.id,
+        serviceName: srv.name,
+        price: Number(srv.price),
+        advancePaid: 0,
+        finishedAt: horaActual()
+      });
+      saveState();
+      renderizarVistaEspecialista();
+      showToast(`✓ "${srv.name}" enviado a Caja.`);
+    }
+
+    // --- VISTA CAJA Y CALENDARIO GLOBAL ---
+    function renderizarCaja() {
+      const hoy = hoyISO();
+      const ticketsHoy = appState.tickets.filter(t => t.date === hoy);
+      const gastosHoy = appState.expenses.filter(g => g.date === hoy);
+
+      const efectivoMxn = ticketsHoy.reduce((acc, t) => acc + Number(t.cashMxn || 0), 0);
+      const digitalMxn = ticketsHoy.reduce((acc, t) => acc + Number(t.digitalMxn || 0), 0);
+      const propinasMxn = ticketsHoy.reduce((acc, t) => acc + Number(t.tipAmount || 0), 0);
+      const gastosTotal = gastosHoy.reduce((acc, g) => acc + Number(g.amount || 0), 0);
+
+      document.getElementById("caja-kpi-cola").textContent = appState.readyToPay.length;
+      document.getElementById("caja-kpi-efectivo").textContent = formatMoney(efectivoMxn - gastosTotal);
+      document.getElementById("caja-kpi-digital").textContent = formatMoney(digitalMxn);
+      document.getElementById("caja-kpi-propinas").textContent = formatMoney(propinasMxn);
+      document.getElementById("caja-kpi-gastos").textContent = formatMoney(gastosTotal);
+      document.getElementById("caja-tc-label").textContent = `$${Number(appState.config.exchangeRate).toFixed(2)} MXN/USD`;
+
+      // Cola de trabajos listos para cobrar
+      const colaEl = document.getElementById("caja-cola-cobro");
+      if (appState.readyToPay.length === 0) {
+        colaEl.innerHTML = '<p class="text-xs text-stone-500 py-6 text-center">No hay servicios pendientes de cobro.</p>';
+      } else {
+        colaEl.innerHTML = appState.readyToPay.map(item => {
+          const emp = appState.employees.find(e => e.id === item.employeeId);
+          return `
+            <div class="p-4 rounded-2xl bg-amber-50/70 border border-amber-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <div class="flex items-center gap-2">
+                  <span class="px-2 py-0.5 rounded-full bg-amber-400 text-stone-950 text-[10px] font-extrabold">Listo ${escapeHtml(item.finishedAt)}</span>
+                  <span class="text-xs font-bold text-stone-600">Atendió: ${escapeHtml(emp ? emp.name : "Personal")}</span>
+                </div>
+                <h3 class="text-base font-extrabold text-stone-900 mt-1">${escapeHtml(item.client)}</h3>
+                <p class="text-xs text-stone-700 font-semibold">
+                  ${escapeHtml(item.serviceName)} — <strong class="text-emerald-700">${formatMoney(item.price)}</strong>
+                  ${item.advancePaid > 0 ? `<span class="text-amber-800"> (Adelanto: ${formatMoney(item.advancePaid)})</span>` : ""}
+                </p>
+              </div>
+              <button type="button" onclick="abrirModalCobro('${escapeHtml(item.id)}')"
+                      class="px-4 py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-extrabold shadow-md cursor-pointer shrink-0">
+                Cobrar Ahora
+              </button>
+            </div>
+          `;
+        }).join("");
+      }
+
+      // Calendario Global de Citas
+      const citasEl = document.getElementById("caja-citas-globales");
+      const citasActivas = appState.appointments.filter(a => a.status === "agendada");
+      if (citasActivas.length === 0) {
+        citasEl.innerHTML = '<p class="text-xs text-stone-500 py-3 text-center">Sin citas agendadas pendientes.</p>';
+      } else {
+        citasEl.innerHTML = citasActivas.map(c => {
+          const emp = appState.employees.find(e => e.id === c.employeeId);
+          const srv = appState.services.find(s => s.id === c.serviceId);
+          return `
+            <div class="p-3 rounded-2xl bg-stone-50 border border-stone-200 flex flex-wrap items-center justify-between gap-2 text-xs">
+              <div>
+                <strong class="text-stone-900">${escapeHtml(c.date)} · ${escapeHtml(c.time)} — ${escapeHtml(c.client)}</strong>
+                <span class="block text-stone-600">
+                  ${escapeHtml(srv ? srv.name : "")} · Con: ${escapeHtml(emp ? emp.name : "")}
+                  ${c.advancePaid > 0 ? ` · <strong class="text-emerald-700">Adelanto: ${formatMoney(c.advancePaid)}</strong>` : ""}
+                </span>
+              </div>
+              <div class="flex gap-1.5">
+                <button type="button" onclick="editarCitaModal('${escapeHtml(c.id)}')"
+                        class="px-2.5 py-1.5 rounded-xl bg-white hover:bg-stone-100 border border-stone-300 font-bold cursor-pointer">
+                  Reagendar / Adelanto
+                </button>
+                <button type="button" onclick="marcarCitaTerminada('${escapeHtml(c.id)}'); renderizarCaja();"
+                        class="px-2.5 py-1.5 rounded-xl bg-emerald-600 text-white font-bold cursor-pointer">
+                  Pasar a Cobro
+                </button>
+              </div>
+            </div>
+          `;
+        }).join("");
+      }
+
+      // Salidas / Gastos hoy
+      const gastosEl = document.getElementById("caja-gastos-list");
+      gastosEl.innerHTML = gastosHoy.length === 0
+        ? '<p class="text-stone-400">Sin salidas de caja registradas hoy.</p>'
+        : gastosHoy.map(g => `
+            <div class="flex items-center justify-between px-3 py-1.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-900 font-semibold">
+              <span>${escapeHtml(g.concept)} (${escapeHtml(g.time)})</span>
+              <strong>-${formatMoney(g.amount)}</strong>
+            </div>
+          `).join("");
+
+      // Tabla de tickets cobrados hoy
+      const ticketsEl = document.getElementById("caja-tickets-hoy");
+      if (ticketsHoy.length === 0) {
+        ticketsEl.innerHTML = '<p class="text-xs text-stone-500 py-3">Aún no se han cobrado tickets hoy.</p>';
+      } else {
+        ticketsEl.innerHTML = `
+          <table class="w-full text-left border-collapse text-xs min-w-[600px]">
+            <thead>
+              <tr class="border-b border-stone-200 text-stone-500 uppercase text-[10px]">
+                <th class="py-2 px-2">Hora</th>
+                <th class="py-2 px-2">Clienta</th>
+                <th class="py-2 px-2">Servicio</th>
+                <th class="py-2 px-2">Especialista</th>
+                <th class="py-2 px-2">Método</th>
+                <th class="py-2 px-2">Servicio</th>
+                <th class="py-2 px-2">Propina</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-stone-100">
+              ${ticketsHoy.map(t => {
+                const emp = appState.employees.find(e => e.id === t.employeeId);
+                return `
+                  <tr>
+                    <td class="py-2 px-2 font-semibold">${escapeHtml(t.time)}</td>
+                    <td class="py-2 px-2 font-bold text-stone-900">${escapeHtml(t.client)}</td>
+                    <td class="py-2 px-2">${escapeHtml(t.serviceName)}</td>
+                    <td class="py-2 px-2">${escapeHtml(emp ? emp.name : "-")}</td>
+                    <td class="py-2 px-2 uppercase font-bold text-blue-800">${escapeHtml(t.method)}</td>
+                    <td class="py-2 px-2 font-extrabold text-emerald-700">${formatMoney(t.serviceAmount)}</td>
+                    <td class="py-2 px-2 font-bold text-purple-700">${formatMoney(t.tipAmount)}</td>
+                  </tr>
+                `;
+              }).join("")}
+            </tbody>
+          </table>
+        `;
+      }
+    }
+
+    function registrarGastoCaja(event) {
+      event.preventDefault();
+      const concept = document.getElementById("gasto-concepto").value.trim();
+      const amount = Number(document.getElementById("gasto-monto").value || 0);
+      if (!concept || amount <= 0) return;
+
+      appState.expenses.unshift({
+        id: "gas-" + Date.now(),
+        date: hoyISO(),
+        time: horaActual(),
+        concept,
+        amount
+      });
+      document.getElementById("gasto-concepto").value = "";
+      document.getElementById("gasto-monto").value = "";
+      saveState();
+      renderizarCaja();
+      showToast("Salida de caja registrada.");
+    }
+
+    // --- MODAL DE COBRO Y CODI ---
+    let cobroActualAdvance = 0;
+    let cobroActualServiceName = "";
+    let cobroActualClient = "";
+
+    function abrirModalCobro(colaId) {
+      const item = appState.readyToPay.find(r => r.id === colaId);
+      if (!item) return;
+      const emp = appState.employees.find(e => e.id === item.employeeId);
+
+      document.getElementById("cobro-item-id").value = item.id;
+      document.getElementById("cobro-empleado-id").value = item.employeeId;
+      cobroActualClient = item.client;
+      cobroActualServiceName = item.serviceName;
+      cobroActualAdvance = Number(item.advancePaid || 0);
+
+      document.getElementById("cobro-cliente-info").textContent = item.client;
+      document.getElementById("cobro-servicio-info").textContent = `${item.serviceName} · Atendió: ${emp ? emp.name : "Personal"}`;
+      document.getElementById("cobro-precio-base").value = Number(item.price || 0);
+
+      if (cobroActualAdvance > 0) {
+        document.getElementById("cobro-adelanto-row").classList.remove("hidden");
+        document.getElementById("cobro-adelanto-monto").textContent = `-${formatMoney(cobroActualAdvance)}`;
+      } else {
+        document.getElementById("cobro-adelanto-row").classList.add("hidden");
+      }
+
+      currentTipMode = "ninguna";
+      currentTipValue = 0;
+      document.getElementById("cobro-propina-libre").value = "";
+      recalcularTotalCobro();
+      cambiarMetodoPagoUI();
+      document.getElementById("modal-cobro").classList.remove("hidden");
+    }
+
+    function abrirModalCobroDirecto() {
+      const srv = appState.services[0];
+      const emp = appState.employees.find(e => e.role === "especialista") || appState.employees[0];
+      const tempId = "cola-" + Date.now();
+      appState.readyToPay.unshift({
+        id: tempId,
+        client: "Clienta Mostrador",
+        employeeId: emp.id,
+        serviceId: srv ? srv.id : "",
+        serviceName: srv ? srv.name : "Servicio General",
+        price: srv ? Number(srv.price) : 500,
+        advancePaid: 0,
+        finishedAt: horaActual()
+      });
+      abrirModalCobro(tempId);
+    }
+
+    function cerrarModalCobro() {
+      document.getElementById("modal-cobro").classList.add("hidden");
+    }
+
+    function seleccionarPropinaRapida(mode, val) {
+      currentTipMode = mode;
+      currentTipValue = val;
+      document.getElementById("cobro-propina-libre").value = "";
+      recalcularTotalCobro();
+    }
+
+    function seleccionarPropinaLibre(val) {
+      currentTipMode = "libre";
+      currentTipValue = Number(val || 0);
+      recalcularTotalCobro();
+    }
+
+    function recalcularTotalCobro() {
+      const precio = Number(document.getElementById("cobro-precio-base").value || 0);
+      const netoServicio = Math.max(0, precio - cobroActualAdvance);
+      let propina = 0;
+      if (currentTipMode === "pct") {
+        propina = netoServicio * (currentTipValue / 100);
+      } else if (currentTipMode === "libre") {
+        propina = Math.max(0, currentTipValue);
+      }
+
+      const totalMxn = netoServicio + propina;
+      const tc = Number(appState.config.exchangeRate || 19.5);
+      const totalUsd = totalMxn / tc;
+
+      document.getElementById("cobro-propina-calculada").textContent = `${formatMoney(propina)} MXN`;
+      document.getElementById("cobro-total-mxn").textContent = formatMoney(totalMxn);
+      document.getElementById("cobro-total-usd-ref").textContent = `≈ $${totalUsd.toFixed(2)} USD (TC $${tc.toFixed(2)})`;
+
+      // Actualizar QR de CoDi si está visible
+      const codiPayload = `CODI|${appState.config.codiClabe}|MONTO:${totalMxn.toFixed(2)}|REF:${cobroActualClient}`;
+      document.getElementById("codi-qr-img").src =
+        "https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=" + encodeURIComponent(codiPayload);
+      document.getElementById("codi-clabe-display").textContent = appState.config.codiClabe;
+
+      return { precio, netoServicio, propina, totalMxn };
+    }
+
+    function cambiarMetodoPagoUI() {
+      const checked = document.querySelector('input[name="metodo_pago"]:checked');
+      const method = checked ? checked.value : "efectivo_mxn";
+      document.getElementById("panel-pago-codi").classList.toggle("hidden", method !== "codi");
+      document.getElementById("panel-pago-mixto").classList.toggle("hidden", method !== "mixto");
+    }
+
+    function confirmarCobroTicket(event) {
+      event.preventDefault();
+      const colaId = document.getElementById("cobro-item-id").value;
+      const empId = document.getElementById("cobro-empleado-id").value;
+      const checked = document.querySelector('input[name="metodo_pago"]:checked');
+      const method = checked ? checked.value : "efectivo_mxn";
+
+      const calc = recalcularTotalCobro();
+      let cashMxn = 0;
+      let digitalMxn = 0;
+
+      if (method === "efectivo_mxn" || method === "efectivo_usd") {
+        cashMxn = calc.totalMxn;
+      } else if (method === "mixto") {
+        cashMxn = Number(document.getElementById("mixto-efectivo").value || 0);
+        digitalMxn = Number(document.getElementById("mixto-digital").value || 0);
+      } else {
+        digitalMxn = calc.totalMxn;
+      }
+
+      appState.tickets.unshift({
+        id: "tck-" + Date.now(),
+        date: hoyISO(),
+        time: horaActual(),
+        client: cobroActualClient,
+        employeeId: empId,
+        serviceName: cobroActualServiceName,
+        serviceAmount: calc.precio,
+        tipAmount: calc.propina,
+        method: method,
+        cashMxn: cashMxn,
+        digitalMxn: digitalMxn
+      });
+
+      appState.readyToPay = appState.readyToPay.filter(r => r.id !== colaId);
+      saveState();
+      cerrarModalCobro();
+      renderizarCaja();
+      showToast(`✓ Cobro de ${formatMoney(calc.totalMxn)} registrado correctamente.`);
+    }
+
+    // --- CITAS Y REAGENDAMIENTOS ---
+    function abrirModalNuevaCita() {
+      document.getElementById("cita-edit-id").value = "";
+      document.getElementById("cita-modal-title").textContent = "Nueva Cita";
+      document.getElementById("cita-cliente").value = "";
+      document.getElementById("cita-fecha").value = hoyISO();
+      document.getElementById("cita-hora").value = "11:00";
+      document.getElementById("cita-adelanto").value = "0";
+      document.getElementById("cita-notas").value = "";
+      poblarSelectsCita();
+      document.getElementById("modal-cita").classList.remove("hidden");
+    }
+
+    function editarCitaModal(citaId) {
+      const cita = appState.appointments.find(a => a.id === citaId);
+      if (!cita) return;
+      poblarSelectsCita();
+      document.getElementById("cita-edit-id").value = cita.id;
+      document.getElementById("cita-modal-title").textContent = "Reagendar / Registrar Adelanto";
+      document.getElementById("cita-cliente").value = cita.client;
+      document.getElementById("cita-fecha").value = cita.date;
+      document.getElementById("cita-hora").value = cita.time;
+      document.getElementById("cita-especialista").value = cita.employeeId;
+      document.getElementById("cita-servicio").value = cita.serviceId;
+      document.getElementById("cita-adelanto").value = cita.advancePaid || 0;
+      document.getElementById("cita-notas").value = cita.notes || "";
+      document.getElementById("modal-cita").classList.remove("hidden");
+    }
+
+    function poblarSelectsCita() {
+      const empSel = document.getElementById("cita-especialista");
+      const srvSel = document.getElementById("cita-servicio");
+      const especialistas = appState.employees.filter(e => e.role === "especialista" || e.role === "duena");
+
+      empSel.innerHTML = especialistas.map(e => `<option value="${escapeHtml(e.id)}">${escapeHtml(e.name)}</option>`).join("");
+      srvSel.innerHTML = appState.services.map(s => `<option value="${escapeHtml(s.id)}">${escapeHtml(s.name)}</option>`).join("");
+    }
+
+    function cerrarModalCita() {
+      document.getElementById("modal-cita").classList.add("hidden");
+    }
+
+    function guardarCitaForm(event) {
+      event.preventDefault();
+      const editId = document.getElementById("cita-edit-id").value;
+      const data = {
+        client: document.getElementById("cita-cliente").value.trim(),
+        date: document.getElementById("cita-fecha").value,
+        time: document.getElementById("cita-hora").value,
+        employeeId: document.getElementById("cita-especialista").value,
+        serviceId: document.getElementById("cita-servicio").value,
+        advancePaid: Number(document.getElementById("cita-adelanto").value || 0),
+        notes: document.getElementById("cita-notas").value.trim(),
+        status: "agendada"
+      };
+
+      if (editId) {
+        const idx = appState.appointments.findIndex(a => a.id === editId);
+        if (idx !== -1) appState.appointments[idx] = Object.assign({}, appState.appointments[idx], data);
+      } else {
+        appState.appointments.unshift(Object.assign({ id: "cit-" + Date.now() }, data));
+      }
+
+      saveState();
+      cerrarModalCita();
+      if (activeModule === "especialista") renderizarVistaEspecialista();
+      if (activeModule === "caja") renderizarCaja();
+      showToast("✓ Cita guardada en agenda.");
+    }
+
+    // --- CHECADOR DE TIEMPO CON DESCANSO ---
+    function abrirChecadorModal() {
+      document.getElementById("checador-pin-input").value = currentUser ? currentUser.pin : "";
+      renderizarLogChecadorHoy();
+      document.getElementById("modal-checador").classList.remove("hidden");
+    }
+
+    function cerrarChecadorModal() {
+      document.getElementById("modal-checador").classList.add("hidden");
+    }
+
+    function registrarMarcaChecador(type) {
+      const pinVal = document.getElementById("checador-pin-input").value.trim();
+      const emp = appState.employees.find(e => String(e.pin) === pinVal);
+      if (!emp) {
+        showToast("PIN inválido en el checador.", "error");
+        return;
+      }
+
+      const labels = {
+        entrada: "Entrada de turno",
+        salida_descanso: "Salida a descanso",
+        regreso_descanso: "Regreso de descanso",
+        salida: "Salida de turno"
+      };
+
+      appState.timeLogs.unshift({
+        id: "log-" + Date.now(),
+        employeeId: emp.id,
+        date: hoyISO(),
+        type: type,
+        time: horaActual()
+      });
+
+      saveState();
+      renderizarLogChecadorHoy();
+      if (activeModule === "especialista") renderizarVistaEspecialista();
+      showToast(`✓ ${emp.name}: ${labels[type]} (${horaActual()})`);
+    }
+
+    function renderizarLogChecadorHoy() {
+      const hoy = hoyISO();
+      const logs = appState.timeLogs.filter(l => l.date === hoy);
+      const box = document.getElementById("checador-estado-hoy");
+      if (logs.length === 0) {
+        box.innerHTML = "<p>Aún no hay registros de reloj hoy.</p>";
+        return;
+      }
+      box.innerHTML = logs.map(l => {
+        const emp = appState.employees.find(e => e.id === l.employeeId);
+        return `<div class="flex justify-between"><strong>${escapeHtml(emp ? emp.name : "Empleado")}</strong><span>${escapeHtml(l.type.replace("_", " "))} · ${escapeHtml(l.time)}</span></div>`;
+      }).join("");
+    }
+
+    // --- DASHBOARD CONTABLE Y CORTE DE VIERNES ---
+    function aplicarFiltroRapidoDashboard(tipo) {
+      const hoy = hoyISO();
+      if (tipo === "hoy") {
+        document.getElementById("dash-fecha-inicio").value = hoy;
+        document.getElementById("dash-fecha-fin").value = hoy;
+      } else if (tipo === "semana") {
+        const sem = obtenerRangoSemanaActual();
+        document.getElementById("dash-fecha-inicio").value = sem.start;
+        document.getElementById("dash-fecha-fin").value = sem.end;
+      } else if (tipo === "mes") {
+        document.getElementById("dash-fecha-inicio").value = hoy.slice(0, 8) + "01";
+        document.getElementById("dash-fecha-fin").value = hoy;
+      }
+      renderizarDashboard();
+    }
+
+    function renderizarDashboard() {
+      const start = document.getElementById("dash-fecha-inicio").value || hoyISO();
+      const end = document.getElementById("dash-fecha-fin").value || hoyISO();
+
+      const tickets = appState.tickets.filter(t => t.date >= start && t.date <= end);
+      const gastos = appState.expenses.filter(g => g.date >= start && g.date <= end);
+
+      const ingresosServicios = tickets.reduce((acc, t) => acc + Number(t.serviceAmount || 0), 0);
+      const totalEfectivo = tickets.reduce((acc, t) => acc + Number(t.cashMxn || 0), 0);
+      const totalDigital = tickets.reduce((acc, t) => acc + Number(t.digitalMxn || 0), 0);
+      const totalGastos = gastos.reduce((acc, g) => acc + Number(g.amount || 0), 0);
+
+      // Cálculo de nómina del periodo por empleado
+      let nominaBaseTotal = 0;
+      const nominaPorEmpleado = appState.employees.map(emp => {
+        const calc = calcularGananciaEmpleado(emp, start, end);
+        nominaBaseTotal += calc.pagoBase;
+        return { emp, calc };
+      });
+
+      const utilidadNeta = ingresosServicios - nominaBaseTotal - totalGastos;
+
+      document.getElementById("dash-total-ingresos").textContent = formatMoney(ingresosServicios);
+      document.getElementById("dash-col-efectivo").textContent = formatMoney(totalEfectivo);
+      document.getElementById("dash-col-digital").textContent = formatMoney(totalDigital);
+      document.getElementById("dash-utilidad-neta").textContent = formatMoney(utilidadNeta);
+
+      // Desglose por método de pago
+      const metodos = ["efectivo_mxn", "efectivo_usd", "codi", "tarjeta", "transferencia", "mixto"];
+      const nombresMetodo = {
+        efectivo_mxn: "💵 Efectivo MXN",
+        efectivo_usd: "🇺🇸 Efectivo USD (en MXN)",
+        codi: "📲 CoDi® QR (Sin comisión)",
+        tarjeta: "💳 Tarjeta Bancaria",
+        transferencia: "🏦 Transferencia SPEI",
+        mixto: "🔀 Pago Mixto"
+      };
+
+      document.getElementById("dash-metodos-list").innerHTML = metodos.map(m => {
+        const suma = tickets
+          .filter(t => t.method === m)
+          .reduce((acc, t) => acc + Number(t.serviceAmount || 0) + Number(t.tipAmount || 0), 0);
+        return `
+          <div class="flex items-center justify-between p-2.5 rounded-xl bg-stone-50 border border-stone-200">
+            <span class="font-semibold text-stone-700">${nombresMetodo[m]}</span>
+            <strong class="text-stone-900">${formatMoney(suma)}</strong>
+          </div>
+        `;
+      }).join("");
+
+      // Lista de Corte Semanal (Viernes) con estado pendiente / enviado / pagado
+      const periodoKey = `${start}_${end}`;
+      document.getElementById("dash-nomina-list").innerHTML = nominaPorEmpleado.map(({ emp, calc }) => {
+        const statusKey = `${periodoKey}_${emp.id}`;
+        const payStatus = appState.weeklyPayrollStatus[statusKey] || "pendiente";
+        const badgeStyle = payStatus === "pagado"
+          ? "bg-emerald-100 text-emerald-800 border-emerald-300"
+          : payStatus === "enviado"
+            ? "bg-amber-100 text-amber-800 border-amber-300"
+            : "bg-stone-100 text-stone-700 border-stone-300";
+
+        return `
+          <div class="p-4 rounded-2xl bg-stone-50 border border-stone-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div class="space-y-1">
+              <div class="flex items-center gap-2">
+                <strong class="text-sm sm:text-base text-stone-900">${escapeHtml(emp.name)}</strong>
+                <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase border ${badgeStyle}">
+                  ${escapeHtml(payStatus)}
+                </span>
+              </div>
+              <p class="text-xs text-stone-600">
+                Horas reloj: <strong>${calc.hours} hrs</strong> (${calc.days} días) ·
+                Base/Comisión: <strong>${formatMoney(calc.pagoBase)}</strong> +
+                Propinas: <strong class="text-purple-700">${formatMoney(calc.propinas)}</strong>
+              </p>
+            </div>
+            <div class="flex items-center gap-2">
+              <div class="text-right mr-2">
+                <span class="block text-[10px] uppercase font-bold text-stone-400">Transferir</span>
+                <strong class="text-base font-extrabold text-emerald-700">${formatMoney(calc.totalPagar)}</strong>
+              </div>
+              <select onchange="cambiarEstadoPagoNomina('${escapeHtml(statusKey)}', this.value)"
+                      class="rounded-xl border border-stone-300 bg-white px-2.5 py-2 text-xs font-bold outline-none">
+                <option value="pendiente" ${payStatus === "pendiente" ? "selected" : ""}>Pendiente</option>
+                <option value="enviado" ${payStatus === "enviado" ? "selected" : ""}>Enviado (Viernes)</option>
+                <option value="pagado" ${payStatus === "pagado" ? "selected" : ""}>Pagado (Confirmado)</option>
+              </select>
+            </div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function cambiarEstadoPagoNomina(statusKey, value) {
+      appState.weeklyPayrollStatus[statusKey] = value;
+      saveState();
+      renderizarDashboard();
+      showToast(`Estado de pago actualizado a: ${value.toUpperCase()}`);
+    }
+
+    function exportarReporteContableCSV() {
+      const start = document.getElementById("dash-fecha-inicio").value || hoyISO();
+      const end = document.getElementById("dash-fecha-fin").value || hoyISO();
+      const tickets = appState.tickets.filter(t => t.date >= start && t.date <= end);
+
+      const headers = ["Fecha", "Hora", "Clienta", "Servicio", "Especialista", "Metodo", "Monto_Servicio_MXN", "Propina_MXN", "Columna_Efectivo", "Columna_Digital_Fiscal"];
+      const rows = tickets.map(t => {
+        const emp = appState.employees.find(e => e.id === t.employeeId);
+        return [
+          t.date,
+          t.time,
+          t.client,
+          t.serviceName,
+          emp ? emp.name : "",
+          t.method,
+          t.serviceAmount,
+          t.tipAmount,
+          t.cashMxn,
+          t.digitalMxn
+        ].map(v => `"${String(v).replace(/"/g, '""')}"`).join(",");
+      });
+
+      const blob = new Blob(["\uFEFF" + [headers.join(","), ...rows].join("\n")], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `meraki-contabilidad-${start}-a-${end}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast("✓ Reporte contable CSV descargado.");
+    }
+
+    // --- ADMINISTRACIÓN Y RESPALDO PORTÁTIL ---
+    function renderizarAdmin() {
+      document.getElementById("cfg-nombre-negocio").value = appState.config.businessName || "Meraki Studio";
+      document.getElementById("cfg-tipo-cambio").value = appState.config.exchangeRate || 19.5;
+      document.getElementById("cfg-codi-clabe").value = appState.config.codiClabe || "";
+
+      document.getElementById("admin-empleados-list").innerHTML = appState.employees.map(emp => `
+        <div class="p-3 rounded-2xl bg-stone-50 border border-stone-200 flex items-center justify-between text-xs">
+          <div>
+            <strong class="text-stone-900 text-sm">${escapeHtml(emp.name)}</strong>
+            <span class="block text-stone-500">Rol: ${escapeHtml(emp.role)} · Esquema: ${escapeHtml(emp.payType)} (${emp.payValue})</span>
+          </div>
+          <span class="px-3 py-1 rounded-xl bg-stone-900 text-amber-300 font-mono font-extrabold">PIN: ${escapeHtml(emp.pin)}</span>
+        </div>
+      `).join("");
+
+      document.getElementById("admin-servicios-list").innerHTML = appState.services.map(srv => `
+        <div class="p-3 rounded-2xl bg-stone-50 border border-stone-200 flex items-center justify-between text-xs">
+          <div>
+            <span class="text-[10px] uppercase font-bold text-stone-400 block">${escapeHtml(srv.category)}</span>
+            <strong class="text-stone-900">${escapeHtml(srv.name)}</strong>
+          </div>
+          <strong class="text-emerald-700 text-sm">${formatMoney(srv.price)}</strong>
+        </div>
+      `).join("");
+    }
+
+    function guardarEmpleado(event) {
+      event.preventDefault();
+      const name = document.getElementById("emp-nombre").value.trim();
+      const pin = document.getElementById("emp-pin").value.trim();
+      const role = document.getElementById("emp-rol").value;
+      const payType = document.getElementById("emp-esquema").value;
+      const payValue = Number(document.getElementById("emp-valor").value || 0);
+
+      const existing = appState.employees.find(e => String(e.pin) === pin);
+      if (existing) {
+        existing.name = name;
+        existing.role = role;
+        existing.payType = payType;
+        existing.payValue = payValue;
+      } else {
+        appState.employees.push({
+          id: "emp-" + Date.now(),
+          name,
+          pin,
+          role,
+          payType,
+          payValue
+        });
+      }
+
+      event.target.reset();
+      saveState();
+      renderizarAdmin();
+      showToast("✓ Miembro del equipo guardado.");
+    }
+
+    function guardarServicioCatalogo(event) {
+      event.preventDefault();
+      const name = document.getElementById("srv-nombre").value.trim();
+      const category = document.getElementById("srv-categoria").value.trim();
+      const price = Number(document.getElementById("srv-precio").value || 0);
+
+      appState.services.push({
+        id: "srv-" + Date.now(),
+        name,
+        category,
+        price
+      });
+
+      event.target.reset();
+      saveState();
+      renderizarAdmin();
+      showToast("✓ Servicio agregado al catálogo.");
+    }
+
+    function guardarConfiguracionNegocio(event) {
+      event.preventDefault();
+      appState.config.businessName = document.getElementById("cfg-nombre-negocio").value.trim() || "Meraki Studio";
+      appState.config.exchangeRate = Number(document.getElementById("cfg-tipo-cambio").value || 19.5);
+      appState.config.codiClabe = document.getElementById("cfg-codi-clabe").value.trim();
+      document.getElementById("header-business-name").textContent = appState.config.businessName;
+      saveState();
+      showToast("✓ Configuración guardada.");
+    }
+
+    function exportarRespaldoJSON() {
+      const blob = new Blob([JSON.stringify(appState, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `respaldo-meraki-${hoyISO()}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast("✓ Respaldo .JSON listo para guardar en USB o nube.");
+    }
+
+    function importarRespaldoJSON(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const imported = JSON.parse(e.target.result);
+          if (imported && imported.employees && imported.services) {
+            appState = imported;
+            saveState();
+            renderizarAdmin();
+            showToast("✓ Datos restaurados desde el archivo.");
+          } else {
+            showToast("Archivo de respaldo no válido.", "error");
+          }
+        } catch (err) {
+          showToast("No se pudo leer el archivo JSON.", "error");
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    // Inicialización al cargar
+    loadState();
+    document.getElementById("header-business-name").textContent = appState.config.businessName;
+    renderDemoPins();
+  </script>
+</body>
+</html>
