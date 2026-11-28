@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Meraki Control · Registradora, Citas y Personal</title>
+  <link id="meraki-favicon" rel="icon" type="image/png" href="logo.png" />
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -22,24 +23,27 @@
 </head>
 <body class="bg-stone-100 text-stone-800 antialiased selection:bg-emerald-200 selection:text-stone-900 min-h-screen flex flex-col">
 
-  <!-- Notificación flotante no bloqueante (reemplaza alert/confirm) -->
+  <!-- Notificación flotante no bloqueante -->
   <div id="toast-box" class="fixed bottom-4 right-4 z-50 hidden max-w-sm rounded-2xl px-4 py-3 text-xs sm:text-sm font-bold shadow-2xl border transition-all"></div>
 
   <!-- Barra superior de estado y acceso rápido -->
   <header class="sticky top-0 z-40 bg-stone-900 text-stone-100 border-b border-stone-800 shadow-md">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-3">
       <div class="flex items-center gap-3">
-        <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-emerald-600 to-teal-700 flex items-center justify-center text-white font-extrabold text-lg shadow-inner">
-          M
+        <!-- Logo oficial de Meraki Studio (toma logo.png del mismo folder con fallback SVG limpio) -->
+        <div class="w-11 h-11 rounded-2xl bg-white/95 border border-stone-700 overflow-hidden flex items-center justify-center shadow-inner shrink-0 p-1">
+          <img id="meraki-header-logo" src="logo.png" alt="Logo Meraki Studio"
+               class="w-full h-full object-contain"
+               onerror="this.onerror=null; this.src=MERAKI_FALLBACK_LOGO;" />
         </div>
         <div>
-          <div class="flex items-center gap-2">
+          <div class="flex items-center gap-2 flex-wrap">
             <h1 id="header-business-name" class="text-base sm:text-lg font-extrabold tracking-tight text-white">
               Meraki Studio
             </h1>
-            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-400/30">
+            <span id="sheets-status-badge" class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-400/30">
               <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-              Offline Ready
+              Google Sheets Conectado
             </span>
           </div>
           <p class="text-[11px] text-stone-400">
@@ -75,12 +79,16 @@
       <!-- Panel izquierdo: Teclado PIN táctil -->
       <div class="lg:col-span-6 bg-white rounded-3xl p-6 sm:p-8 shadow-xl border border-stone-200/90">
         <div class="text-center mb-5">
-          <span class="inline-block px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-extrabold uppercase tracking-wider mb-2">
+          <div class="w-16 h-16 mx-auto mb-3 rounded-2xl bg-stone-50 border border-stone-200 p-1.5 flex items-center justify-center shadow-xs">
+            <img src="logo.png" alt="Meraki Studio" class="w-full h-full object-contain"
+                 onerror="this.onerror=null; this.src=MERAKI_FALLBACK_LOGO;" />
+          </div>
+          <span class="inline-block px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-extrabold uppercase tracking-wider mb-1.5">
             Acceso Rápido por PIN
           </span>
           <h2 class="text-2xl font-extrabold text-stone-900">Ingresa tu PIN</h2>
           <p class="text-xs sm:text-sm text-stone-500 mt-1">
-            Accede a tus citas, caja o panel administrativo según tu perfil.
+            Usa la pantalla táctil o escribe tu PIN con el teclado numérico.
           </p>
         </div>
 
@@ -111,24 +119,31 @@
         </div>
       </div>
 
-      <!-- Panel derecho: Accesos de demostración listos para probar con 1 toque -->
+      <!-- Panel derecho: Equipo configurado (SIN mostrar PINs) -->
       <div class="lg:col-span-6 space-y-4">
         <div class="bg-white rounded-3xl p-6 border border-stone-200 shadow-sm space-y-3">
           <span class="inline-block px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800 text-[11px] font-extrabold uppercase">
-            Perfiles Configurados (Demo Lista)
+            Equipo Meraki Studio
           </span>
-          <h3 class="text-lg font-extrabold text-stone-900">Prueba cada rol con un toque</h3>
+          <h3 class="text-lg font-extrabold text-stone-900">Personal Activo</h3>
           <p class="text-xs text-stone-600 leading-relaxed">
-            Cada persona tiene su propio PIN único. Los especialistas solo ven sus citas y servicios (sin precios previos) y envían sus trabajos terminados directo a caja sin gastar papel.
+            Ingresa tu PIN personal en el teclado para abrir tu espacio de trabajo. Cada especialista ve su flujo de citas en tiempo real y envía los servicios terminados directo a caja.
           </p>
 
           <div id="demo-pins-list" class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-2"></div>
         </div>
 
         <div class="bg-stone-900 text-stone-200 rounded-3xl p-5 border border-stone-800 text-xs space-y-2">
-          <p class="font-extrabold text-amber-400 uppercase tracking-wider">Respaldo Portátil &amp; Carpeta Compartida</p>
+          <div class="flex items-center justify-between">
+            <p class="font-extrabold text-amber-400 uppercase tracking-wider">Base de Datos Conectada (Google Sheets)</p>
+            <a href="https://docs.google.com/spreadsheets/d/1y6xm0uutO5NG6ylmQJ2Kc6eYQlAAZmznuIxQG22E_BE/edit?usp=sharing"
+               target="_blank" rel="noopener noreferrer"
+               class="text-emerald-300 hover:underline font-bold">
+              Abrir Hoja ↗
+            </a>
+          </div>
           <p class="text-stone-300 leading-relaxed">
-            Todos los movimientos se guardan al instante en el navegador y pueden exportarse/importarse en un archivo <code class="text-emerald-300">.json</code> dentro de tu memoria USB, Google Drive o Dropbox.
+            Los servicios, precios, citas con teléfono/correo y cobros se sincronizan automáticamente con la base de datos de Meraki Studio manteniendo la información existente.
           </p>
         </div>
       </div>
@@ -141,37 +156,35 @@
     <!-- Barra de navegación de módulos permitidos para el usuario activo -->
     <nav id="role-nav-tabs" class="flex flex-wrap items-center gap-2 bg-white p-2 rounded-2xl border border-stone-200 shadow-xs"></nav>
 
-    <!-- MÓDULO A: VISTA DE ESPECIALISTA (Citas sin precios + Servicios + Botón Terminado + Mis Ganancias) -->
+    <!-- MÓDULO A: VISTA DE ESPECIALISTA (Feed en tiempo real sin precios + Nueva Cita sin adelanto + Mis Ganancias) -->
     <section id="mod-especialista" class="hidden space-y-5">
+      <div id="esp-admin-switcher" class="hidden bg-amber-50 border border-amber-200 rounded-2xl px-4 py-3 flex flex-wrap items-center justify-between gap-2 text-xs">
+        <span class="font-extrabold text-amber-950">Modo Supervisión: Viendo feed de citas y ganancias de:</span>
+        <select id="esp-switcher-select" onchange="renderizarVistaEspecialista()" class="rounded-xl border border-amber-300 bg-white px-3 py-1.5 font-bold text-stone-900 outline-none"></select>
+      </div>
+
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
-        <!-- Columna izquierda: Citas agendadas y servicios asignados (SIN precios visibles) -->
+        <!-- Columna izquierda: Feed en vivo de citas por atender (SIN precios ni bloques extra abajo) -->
         <div class="lg:col-span-7 space-y-4">
           <div class="bg-white rounded-3xl p-5 border border-stone-200 shadow-xs space-y-4">
             <div class="flex flex-wrap items-center justify-between gap-2">
               <div>
-                <span class="text-[11px] font-extrabold uppercase tracking-wider text-emerald-700 bg-emerald-100 px-2.5 py-0.5 rounded-full">
-                  Agenda del Día
-                </span>
+                <div class="flex items-center gap-2">
+                  <span class="inline-flex items-center gap-1.5 text-[11px] font-extrabold uppercase tracking-wider text-emerald-700 bg-emerald-100 px-2.5 py-0.5 rounded-full">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse"></span>
+                    Feed en Vivo
+                  </span>
+                </div>
                 <h2 class="text-xl font-extrabold text-stone-900 mt-1">Mis Citas por Atender</h2>
+                <p class="text-xs text-stone-500">Se actualiza automáticamente conforme entran nuevas citas.</p>
               </div>
               <button type="button" onclick="abrirModalNuevaCita()"
-                      class="px-3.5 py-2 rounded-xl bg-stone-900 hover:bg-stone-800 text-white text-xs font-bold transition cursor-pointer">
-                + Agendar / Walk-in
+                      class="px-4 py-2.5 rounded-xl bg-stone-900 hover:bg-stone-800 text-white text-xs font-extrabold shadow-xs transition cursor-pointer">
+                + Nueva Cita
               </button>
             </div>
 
             <div id="esp-citas-list" class="space-y-3"></div>
-          </div>
-
-          <!-- Servicios extra que realiza esta especialista (sin montos de cobro) -->
-          <div class="bg-white rounded-3xl p-5 border border-stone-200 shadow-xs space-y-3">
-            <div>
-              <h3 class="text-base font-extrabold text-stone-900">Pase Rápido a Caja (Cliente sin cita previa)</h3>
-              <p class="text-xs text-stone-500">
-                Selecciona el servicio que realizaste para mandarlo directo a caja con tu nombre, sin papel y sin mostrar precios en tu pantalla.
-              </p>
-            </div>
-            <div id="esp-servicios-rapidos" class="grid grid-cols-1 sm:grid-cols-2 gap-2.5"></div>
           </div>
         </div>
 
@@ -241,17 +254,11 @@
               </button>
             </div>
           </div>
-
-          <!-- Historial reciente del especialista -->
-          <div class="bg-white rounded-3xl p-5 border border-stone-200 shadow-xs space-y-3">
-            <h3 class="text-sm font-extrabold text-stone-900 uppercase tracking-wider">Mis Servicios de Hoy</h3>
-            <div id="esp-historial-hoy" class="space-y-2 text-xs"></div>
-          </div>
         </div>
       </div>
     </section>
 
-    <!-- MÓDULO B: CAJA / REGISTRADORA Y CALENDARIO GLOBAL (La Tía) -->
+    <!-- MÓDULO B: CAJA / REGISTRADORA Y CALENDARIO VISUAL -->
     <section id="mod-caja" class="hidden space-y-5">
       <!-- Resumen rápido de caja del día -->
       <div class="grid grid-cols-2 lg:grid-cols-5 gap-3">
@@ -279,11 +286,11 @@
 
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
         <!-- Columna izquierda: Cola de trabajos terminados listos para cobrar -->
-        <div class="lg:col-span-6 bg-white rounded-3xl p-5 border border-stone-200 shadow-xs space-y-4">
+        <div class="lg:col-span-5 bg-white rounded-3xl p-5 border border-stone-200 shadow-xs space-y-4">
           <div class="flex flex-wrap items-center justify-between gap-2">
             <div>
               <span class="text-[11px] font-extrabold uppercase tracking-wider text-amber-700 bg-amber-100 px-2.5 py-0.5 rounded-full">
-                Sin Papel · Directo a Caja
+                Directo a Caja
               </span>
               <h2 class="text-lg font-extrabold text-stone-900 mt-1">Listos para Cobrar</h2>
             </div>
@@ -296,14 +303,14 @@
           <div id="caja-cola-cobro" class="space-y-3"></div>
         </div>
 
-        <!-- Columna derecha: Calendario Global de Citas + Salidas de Caja -->
-        <div class="lg:col-span-6 space-y-5">
-          <!-- Calendario / Citas globales -->
+        <!-- Columna derecha: Calendario Visual de Citas + Salidas de Caja -->
+        <div class="lg:col-span-7 space-y-5">
+          <!-- Calendario Visual Interactivo -->
           <div class="bg-white rounded-3xl p-5 border border-stone-200 shadow-xs space-y-4">
             <div class="flex flex-wrap items-center justify-between gap-2">
               <div>
-                <h2 class="text-lg font-extrabold text-stone-900">Calendario Global de Citas</h2>
-                <p class="text-xs text-stone-500">Reagenda, registra adelantos o crea citas nuevas.</p>
+                <h2 class="text-lg font-extrabold text-stone-900">Calendario de Citas Agendadas</h2>
+                <p class="text-xs text-stone-500">Selecciona un día para ver citas, registrar pagos parciales (adelantos) o reagendar.</p>
               </div>
               <button type="button" onclick="abrirModalNuevaCita()"
                       class="px-3.5 py-2 rounded-xl bg-stone-900 hover:bg-stone-800 text-white text-xs font-bold transition cursor-pointer">
@@ -311,16 +318,26 @@
               </button>
             </div>
 
-            <div id="caja-citas-globales" class="space-y-2.5"></div>
+            <!-- Calendario mensual visual -->
+            <div id="caja-calendario-widget" class="bg-stone-50 rounded-2xl p-3.5 border border-stone-200"></div>
+
+            <!-- Lista de citas del día seleccionado -->
+            <div class="space-y-2">
+              <div class="flex items-center justify-between">
+                <h3 id="caja-dia-seleccionado-label" class="text-xs font-extrabold uppercase tracking-wider text-stone-600">Citas del Día</h3>
+                <button type="button" onclick="seleccionarFechaCalendario('todas')" class="text-xs font-bold text-emerald-700 hover:underline cursor-pointer">
+                  Ver todas las pendientes
+                </button>
+              </div>
+              <div id="caja-citas-globales" class="space-y-2.5"></div>
+            </div>
           </div>
 
           <!-- Salidas de dinero / Gastos operativos -->
           <div class="bg-white rounded-3xl p-5 border border-stone-200 shadow-xs space-y-3">
-            <div class="flex items-center justify-between">
-              <div>
-                <h3 class="text-base font-extrabold text-stone-900">Salidas de Caja / Gastos</h3>
-                <p class="text-xs text-stone-500">Insumos, agua, limpieza o vales pagados desde el cajón.</p>
-              </div>
+            <div>
+              <h3 class="text-base font-extrabold text-stone-900">Salidas de Caja / Gastos</h3>
+              <p class="text-xs text-stone-500">Insumos, agua, limpieza o vales pagados desde el cajón.</p>
             </div>
             <form onsubmit="registrarGastoCaja(event)" class="grid grid-cols-1 sm:grid-cols-12 gap-2">
               <input type="text" id="gasto-concepto" required placeholder="Concepto (ej. Toallas / Café)"
@@ -339,15 +356,21 @@
 
       <!-- Últimos tickets cobrados hoy -->
       <div class="bg-white rounded-3xl p-5 border border-stone-200 shadow-xs space-y-3">
-        <div class="flex items-center justify-between">
-          <h3 class="text-base font-extrabold text-stone-900">Tickets Cobrados Hoy</h3>
-          <span class="text-xs text-stone-500">Tipo de cambio actual: <strong id="caja-tc-label">$19.50 MXN/USD</strong></span>
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <h3 class="text-base font-extrabold text-stone-900">Tickets Cobrados Hoy</h3>
+            <span class="text-xs text-stone-500">Historial de pagos liquidados del día</span>
+          </div>
+          <button type="button" onclick="generarCorteZDiario()"
+                  class="px-3.5 py-2 rounded-xl bg-stone-900 hover:bg-stone-800 text-amber-300 text-xs font-extrabold cursor-pointer">
+            🧾 Generar Corte Z del Día
+          </button>
         </div>
         <div id="caja-tickets-hoy" class="overflow-x-auto"></div>
       </div>
     </section>
 
-    <!-- MÓDULO C: DASHBOARD CONTABLE Y CORTE SEMANAL DE NÓMINA (Dueña / Hermana) -->
+    <!-- MÓDULO C: DASHBOARD CONTABLE, CALENDARIO Y CORTE SEMANAL DE NÓMINA (Manager / Admin) -->
     <section id="mod-dashboard" class="hidden space-y-5">
       <!-- Filtros de fechas -->
       <div class="bg-white rounded-3xl p-5 border border-stone-200 shadow-xs flex flex-col lg:flex-row lg:items-center justify-between gap-4">
@@ -355,7 +378,7 @@
           <span class="text-[11px] font-extrabold uppercase tracking-wider text-blue-800 bg-blue-100 px-2.5 py-0.5 rounded-full">
             Control Financiero y Fiscal
           </span>
-          <h2 class="text-xl font-extrabold text-stone-900 mt-1">Dashboard de Ingresos y Nómina</h2>
+          <h2 class="text-xl font-extrabold text-stone-900 mt-1">Dashboard de Ingresos, Agenda y Nómina</h2>
         </div>
 
         <div class="flex flex-wrap items-center gap-2">
@@ -402,6 +425,29 @@
         </div>
       </div>
 
+      <!-- Calendario visible también para Manager -->
+      <div class="bg-white rounded-3xl p-5 border border-stone-200 shadow-xs space-y-4">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <span class="text-[11px] font-extrabold uppercase tracking-wider text-emerald-700 bg-emerald-100 px-2.5 py-0.5 rounded-full">
+              Agenda General
+            </span>
+            <h3 class="text-lg font-extrabold text-stone-900 mt-1">Calendario de Citas del Estudio</h3>
+          </div>
+          <button type="button" onclick="abrirModalNuevaCita()"
+                  class="px-3.5 py-2 rounded-xl bg-stone-900 hover:bg-stone-800 text-white text-xs font-bold transition cursor-pointer">
+            + Nueva Cita
+          </button>
+        </div>
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
+          <div id="dash-calendario-widget" class="lg:col-span-5 bg-stone-50 rounded-2xl p-3.5 border border-stone-200"></div>
+          <div class="lg:col-span-7 space-y-2">
+            <h4 id="dash-dia-seleccionado-label" class="text-xs font-extrabold uppercase tracking-wider text-stone-600">Citas del Día</h4>
+            <div id="dash-citas-lista" class="space-y-2"></div>
+          </div>
+        </div>
+      </div>
+
       <!-- Desglose por método de pago + Corte semanal de viernes por empleado -->
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
         <div class="lg:col-span-4 bg-white rounded-3xl p-5 border border-stone-200 shadow-xs space-y-3">
@@ -427,58 +473,106 @@
       </div>
     </section>
 
-    <!-- MÓDULO D: ADMINISTRACIÓN (Personal, PINs, Servicios, CoDi y Respaldo Portátil) -->
+    <!-- MÓDULO D: ADMINISTRACIÓN (Manager: Personal, Tareas asignadas, Asistencia Verde/Rojo, Servicios y Sincronización Sheets) -->
     <section id="mod-admin" class="hidden space-y-5">
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
-        <!-- Gestión de Personal y Esquemas de Pago -->
+        <!-- Gestión de Personal, Tareas y Esquemas de Pago -->
         <div class="lg:col-span-7 bg-white rounded-3xl p-5 border border-stone-200 shadow-xs space-y-4">
-          <div>
-            <h2 class="text-lg font-extrabold text-stone-900">Equipo, PINs y Esquemas de Pago</h2>
-            <p class="text-xs text-stone-500">Configura PIN único, rol y pago por porcentaje, fijo por día o fijo por hora.</p>
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <h2 class="text-lg font-extrabold text-stone-900">Equipo, Tareas Asignadas y Asistencia</h2>
+              <p class="text-xs text-stone-500">
+                Crea o edita usuarios, asigna qué servicios/tareas realiza cada quien y controla su entrada (verde) o salida (rojo).
+              </p>
+            </div>
+            <button type="button" onclick="limpiarFormEmpleado()" class="text-xs font-bold text-emerald-700 hover:underline cursor-pointer">
+              + Nuevo Usuario
+            </button>
           </div>
 
-          <form onsubmit="guardarEmpleado(event)" class="grid grid-cols-1 sm:grid-cols-12 gap-2.5 bg-stone-50 p-3.5 rounded-2xl border border-stone-200">
-            <input type="text" id="emp-nombre" required placeholder="Nombre (ej. Sofía)"
-                   class="sm:col-span-3 rounded-xl border border-stone-300 bg-white px-3 py-2 text-xs font-semibold outline-none" />
-            <input type="text" id="emp-pin" required maxlength="6" placeholder="PIN (4 dígitos)"
-                   class="sm:col-span-2 rounded-xl border border-stone-300 bg-white px-3 py-2 text-xs font-semibold outline-none" />
-            <select id="emp-rol" class="sm:col-span-2 rounded-xl border border-stone-300 bg-white px-2.5 py-2 text-xs font-semibold outline-none">
-              <option value="especialista">Especialista</option>
-              <option value="caja">Caja</option>
-              <option value="duena">Dueña</option>
-              <option value="admin">Admin</option>
-            </select>
-            <select id="emp-esquema" class="sm:col-span-3 rounded-xl border border-stone-300 bg-white px-2.5 py-2 text-xs font-semibold outline-none">
-              <option value="porcentaje">% Comisión</option>
-              <option value="dia">Fijo por Día ($)</option>
-              <option value="hora">Fijo por Hora ($)</option>
-            </select>
-            <input type="number" id="emp-valor" required min="0" step="any" placeholder="Valor (% o $)"
-                   class="sm:col-span-2 rounded-xl border border-stone-300 bg-white px-3 py-2 text-xs font-semibold outline-none" />
-            <button type="submit" class="sm:col-span-12 py-2 rounded-xl bg-stone-900 hover:bg-stone-800 text-white text-xs font-extrabold cursor-pointer">
-              + Agregar / Actualizar Miembro del Equipo
+          <form onsubmit="guardarEmpleado(event)" class="space-y-3 bg-stone-50 p-4 rounded-2xl border border-stone-200">
+            <input type="hidden" id="emp-edit-id" />
+            <div class="grid grid-cols-1 sm:grid-cols-12 gap-2.5">
+              <div class="sm:col-span-4">
+                <label class="block text-[11px] font-bold text-stone-600 mb-1">Nombre</label>
+                <input type="text" id="emp-nombre" required placeholder="Ej. Sofía"
+                       class="w-full rounded-xl border border-stone-300 bg-white px-3 py-2 text-xs font-semibold outline-none" />
+              </div>
+              <div class="sm:col-span-2">
+                <label class="block text-[11px] font-bold text-stone-600 mb-1">PIN</label>
+                <input type="text" id="emp-pin" required maxlength="6" placeholder="1111"
+                       class="w-full rounded-xl border border-stone-300 bg-white px-3 py-2 text-xs font-semibold outline-none" />
+              </div>
+              <div class="sm:col-span-2">
+                <label class="block text-[11px] font-bold text-stone-600 mb-1">Rol</label>
+                <select id="emp-rol" class="w-full rounded-xl border border-stone-300 bg-white px-2.5 py-2 text-xs font-semibold outline-none">
+                  <option value="especialista">Especialista</option>
+                  <option value="caja">Caja</option>
+                  <option value="manager">Manager</option>
+                  <option value="admin">Admin</option>
+                </select>
+              </div>
+              <div class="sm:col-span-2">
+                <label class="block text-[11px] font-bold text-stone-600 mb-1">Esquema</label>
+                <select id="emp-esquema" class="w-full rounded-xl border border-stone-300 bg-white px-2 py-2 text-xs font-semibold outline-none">
+                  <option value="porcentaje">% Comisión</option>
+                  <option value="dia">Fijo Día ($)</option>
+                  <option value="hora">Fijo Hora ($)</option>
+                </select>
+              </div>
+              <div class="sm:col-span-2">
+                <label class="block text-[11px] font-bold text-stone-600 mb-1">Valor</label>
+                <input type="number" id="emp-valor" required min="0" step="any" placeholder="40"
+                       class="w-full rounded-xl border border-stone-300 bg-white px-3 py-2 text-xs font-semibold outline-none" />
+              </div>
+            </div>
+
+            <!-- Selección de tareas / servicios asignados al especialista -->
+            <div class="space-y-1.5">
+              <div class="flex items-center justify-between">
+                <label class="text-[11px] font-extrabold uppercase tracking-wider text-stone-700">
+                  Tareas / Servicios Asignados a este Usuario:
+                </label>
+                <div class="flex gap-2 text-[11px]">
+                  <button type="button" onclick="seleccionarTodasTareasEmp(true)" class="font-bold text-emerald-700 hover:underline cursor-pointer">Marcar todas</button>
+                  <span class="text-stone-300">|</span>
+                  <button type="button" onclick="seleccionarTodasTareasEmp(false)" class="font-bold text-stone-500 hover:underline cursor-pointer">Limpiar</button>
+                </div>
+              </div>
+              <div id="emp-tareas-checkboxes" class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 max-h-40 overflow-y-auto p-2.5 bg-white rounded-xl border border-stone-200 text-xs"></div>
+            </div>
+
+            <button type="submit" class="w-full py-2.5 rounded-xl bg-stone-900 hover:bg-stone-800 text-white text-xs font-extrabold cursor-pointer">
+              ✓ Guardar Usuario y Tareas Asignadas
             </button>
           </form>
 
-          <div id="admin-empleados-list" class="space-y-2"></div>
+          <div id="admin-empleados-list" class="space-y-2.5"></div>
         </div>
 
-        <!-- Configuración del Negocio, CoDi y Respaldo Portátil -->
+        <!-- Configuración del Negocio, CoDi, Google Sheets y Respaldo Portátil -->
         <div class="lg:col-span-5 space-y-5">
           <div class="bg-white rounded-3xl p-5 border border-stone-200 shadow-xs space-y-3">
-            <h3 class="text-base font-extrabold text-stone-900">Configuración de Caja y CoDi®</h3>
+            <h3 class="text-base font-extrabold text-stone-900">Configuración de Caja, CoDi® y Google Sheets</h3>
             <form onsubmit="guardarConfiguracionNegocio(event)" class="space-y-3 text-xs">
               <div>
                 <label class="block font-bold text-stone-700 mb-1">Nombre del Negocio</label>
                 <input type="text" id="cfg-nombre-negocio" required class="w-full rounded-xl border border-stone-300 bg-stone-50 px-3 py-2 font-semibold outline-none" />
               </div>
               <div>
-                <label class="block font-bold text-stone-700 mb-1">Tipo de Cambio (MXN por 1 USD)</label>
+                <label class="block font-bold text-stone-700 mb-1">Tipo de Cambio Interno (MXN por 1 USD)</label>
                 <input type="number" id="cfg-tipo-cambio" required min="1" step="0.01" class="w-full rounded-xl border border-stone-300 bg-stone-50 px-3 py-2 font-semibold outline-none" />
               </div>
               <div>
-                <label class="block font-bold text-stone-700 mb-1">CLABE o Dato de Cobro CoDi® (Para QR sin comisión)</label>
+                <label class="block font-bold text-stone-700 mb-1">Datos CoDi® (QR sin monto fijo)</label>
                 <input type="text" id="cfg-codi-clabe" placeholder="Ej. 012180001234567890 · MERAKI STUDIO" class="w-full rounded-xl border border-stone-300 bg-stone-50 px-3 py-2 font-semibold outline-none" />
+              </div>
+              <div>
+                <label class="block font-bold text-stone-700 mb-1">URL Web App Google Apps Script (Base de Datos)</label>
+                <input type="url" id="cfg-sheets-webhook" placeholder="https://script.google.com/macros/s/.../exec" class="w-full rounded-xl border border-stone-300 bg-stone-50 px-3 py-2 font-semibold outline-none" />
+                <p class="text-[11px] text-stone-500 mt-1">
+                  Conectado a la hoja de Meraki Studio para enviar citas (nombre, teléfono, correo) y cobros sin sobrescribir los datos existentes.
+                </p>
               </div>
               <button type="submit" class="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold cursor-pointer">
                 Guardar Configuración
@@ -490,7 +584,7 @@
           <div class="bg-white rounded-3xl p-5 border border-stone-200 shadow-xs space-y-3">
             <h3 class="text-base font-extrabold text-stone-900">Sincronización y Respaldo de Archivo</h3>
             <p class="text-xs text-stone-600 leading-relaxed">
-              Guarda una copia de seguridad en tu carpeta de Google Drive, Dropbox o memoria USB para llevar tus datos a cualquier computadora.
+              Exporta o importa una copia de seguridad en <code class="text-emerald-700 font-bold">.json</code> o sincroniza con tu hoja de cálculo de Google Sheets.
             </p>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
               <button type="button" onclick="exportarRespaldoJSON()"
@@ -506,22 +600,28 @@
         </div>
       </div>
 
-      <!-- Catálogo de Servicios y Precios (Visible solo para Admin/Caja, oculto para Especialistas) -->
+      <!-- Catálogo de Servicios y Precios (Agregar, Editar y Quitar servicios) -->
       <div class="bg-white rounded-3xl p-5 border border-stone-200 shadow-xs space-y-4">
-        <div>
-          <h3 class="text-lg font-extrabold text-stone-900">Catálogo de Servicios y Precios</h3>
-          <p class="text-xs text-stone-500">Los especialistas ven el nombre y duración del servicio; los precios solo aparecen en Caja y Administración.</p>
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <h3 class="text-lg font-extrabold text-stone-900">Catálogo de Servicios y Precios</h3>
+            <p class="text-xs text-stone-500">Agrega, edita o quita servicios. Se reflejan de inmediato en agendar citas y en caja.</p>
+          </div>
+          <button type="button" onclick="limpiarFormServicio()" class="text-xs font-bold text-emerald-700 hover:underline cursor-pointer">
+            + Limpiar Formulario
+          </button>
         </div>
 
         <form onsubmit="guardarServicioCatalogo(event)" class="grid grid-cols-1 sm:grid-cols-12 gap-2.5 bg-stone-50 p-3.5 rounded-2xl border border-stone-200">
+          <input type="hidden" id="srv-edit-id" />
           <input type="text" id="srv-nombre" required placeholder="Nombre del servicio (ej. Masaje Relajante 40 min)"
                  class="sm:col-span-5 rounded-xl border border-stone-300 bg-white px-3 py-2 text-xs font-semibold outline-none" />
-          <input type="text" id="srv-categoria" required placeholder="Categoría (ej. Spa / Uñas)"
+          <input type="text" id="srv-categoria" required placeholder="Categoría (ej. Spa / Uñas / Pestañas)"
                  class="sm:col-span-3 rounded-xl border border-stone-300 bg-white px-3 py-2 text-xs font-semibold outline-none" />
           <input type="number" id="srv-precio" required min="0" step="any" placeholder="Precio MXN"
                  class="sm:col-span-2 rounded-xl border border-stone-300 bg-white px-3 py-2 text-xs font-semibold outline-none" />
           <button type="submit" class="sm:col-span-2 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-extrabold cursor-pointer">
-            + Agregar
+            Guardar
           </button>
         </form>
 
@@ -568,7 +668,7 @@
     </div>
   </div>
 
-  <!-- MODAL 2: COBRO EN CAJA (Efectivo MXN/USD, Tarjeta, Transferencia, Mixto, CoDi QR y Propinas Flexibles) -->
+  <!-- MODAL 2: COBRO EN CAJA (Efectivo MXN/USD, Tarjeta, Transferencia, Mixto, CoDi QR sin monto y Propinas Flexibles) -->
   <div id="modal-cobro" class="fixed inset-0 z-50 hidden bg-stone-950/75 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
     <div class="bg-white rounded-3xl max-w-xl w-full border border-stone-200 shadow-2xl overflow-hidden my-4">
       <div class="bg-emerald-900 text-white px-5 py-4 flex items-center justify-between">
@@ -582,9 +682,10 @@
       <form onsubmit="confirmarCobroTicket(event)" class="p-5 space-y-4 text-xs sm:text-sm">
         <input type="hidden" id="cobro-item-id" />
         <input type="hidden" id="cobro-empleado-id" />
+        <input type="hidden" id="cobro-is-direct" value="0" />
 
         <!-- Resumen de cliente y servicio -->
-        <div class="bg-stone-50 rounded-2xl p-3.5 border border-stone-200 flex flex-wrap items-center justify-between gap-2">
+        <div id="cobro-resumen-box" class="bg-stone-50 rounded-2xl p-3.5 border border-stone-200 flex flex-wrap items-center justify-between gap-2">
           <div>
             <p id="cobro-cliente-info" class="font-extrabold text-stone-900">Cliente</p>
             <p id="cobro-servicio-info" class="text-xs text-stone-600">Servicio · Especialista</p>
@@ -596,13 +697,41 @@
           </div>
         </div>
 
-        <!-- Adelanto previo si existiera -->
+        <!-- Selector editable cuando es Cobro Directo en mostrador -->
+        <div id="cobro-directo-fields" class="hidden bg-stone-50 rounded-2xl p-3.5 border border-stone-200 space-y-2.5 text-xs">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            <div>
+              <label class="block font-bold text-stone-700 mb-1">Nombre de Clienta</label>
+              <input type="text" id="cobro-direct-cliente" value="Clienta Mostrador" oninput="sincronizarCamposCobroDirecto()"
+                     class="w-full rounded-xl border border-stone-300 bg-white px-3 py-1.5 font-semibold outline-none" />
+            </div>
+            <div>
+              <label class="block font-bold text-stone-700 mb-1">Especialista que atendió</label>
+              <select id="cobro-direct-emp" onchange="sincronizarCamposCobroDirecto()"
+                      class="w-full rounded-xl border border-stone-300 bg-white px-3 py-1.5 font-semibold outline-none"></select>
+            </div>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-12 gap-2.5 items-end">
+            <div class="sm:col-span-8">
+              <label class="block font-bold text-stone-700 mb-1">Servicio realizado</label>
+              <select id="cobro-direct-srv" onchange="alCambiarServicioDirecto()"
+                      class="w-full rounded-xl border border-stone-300 bg-white px-3 py-1.5 font-semibold outline-none"></select>
+            </div>
+            <div class="sm:col-span-4">
+              <label class="block font-bold text-stone-700 mb-1">Precio MXN</label>
+              <input type="number" id="cobro-direct-precio" min="0" step="any" oninput="document.getElementById('cobro-precio-base').value = this.value; recalcularTotalCobro();"
+                     class="w-full rounded-xl border border-stone-300 bg-white px-3 py-1.5 font-extrabold text-right outline-none" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Pago parcial / adelanto previo si existiera -->
         <div id="cobro-adelanto-row" class="hidden bg-amber-50 border border-amber-200 rounded-xl px-3 py-2 flex items-center justify-between text-xs">
-          <span class="font-bold text-amber-900">Adelanto ya pagado previamente:</span>
+          <span class="font-bold text-amber-900">Pago parcial / adelanto ya dejado en caja:</span>
           <strong id="cobro-adelanto-monto" class="text-amber-900">-$0.00</strong>
         </div>
 
-        <!-- Propina flexible (Rápida, % o cantidad libre, 100% para quien atendió) -->
+        <!-- Propina flexible -->
         <div class="space-y-2">
           <div class="flex items-center justify-between">
             <label class="font-extrabold text-stone-800">Propina (100% para especialista)</label>
@@ -618,13 +747,16 @@
           </div>
         </div>
 
-        <!-- Total a cobrar en pantalla grande -->
+        <!-- Total a cobrar: MXN grande y USD abajo más chico (SIN mostrar tipo de cambio) -->
         <div class="bg-stone-900 text-white rounded-2xl p-4 flex items-center justify-between">
           <div>
             <span class="text-[11px] uppercase tracking-wider text-stone-400 block">Total a Cobrar</span>
-            <span id="cobro-total-usd-ref" class="text-xs text-amber-300 font-semibold">≈ $0.00 USD</span>
+            <span class="text-xs text-stone-400">Liquidación en mostrador</span>
           </div>
-          <span id="cobro-total-mxn" class="text-3xl font-extrabold text-emerald-400">$0.00</span>
+          <div class="text-right">
+            <span id="cobro-total-mxn" class="block text-3xl font-extrabold text-emerald-400 leading-tight">$0.00 MXN</span>
+            <span id="cobro-total-usd-ref" class="block text-xs text-amber-300 font-semibold mt-0.5">$0.00 USD</span>
+          </div>
         </div>
 
         <!-- Método de pago -->
@@ -658,17 +790,19 @@
           </div>
         </div>
 
-        <!-- Panel dinámico para CoDi QR -->
+        <!-- Panel dinámico para CoDi QR (SIN monto precargado para que la clienta ponga la cantidad de caja) -->
         <div id="panel-pago-codi" class="hidden bg-blue-50 border border-blue-200 rounded-2xl p-4 text-center space-y-2">
           <span class="inline-block px-2.5 py-0.5 rounded-full bg-blue-900 text-white text-[10px] font-extrabold uppercase">
-            Cobro Digital CoDi® · Sin Comisión
+            Cobro Digital CoDi® · QR Abierto
           </span>
-          <p class="text-xs text-blue-950 font-bold">Muestra este QR a la clienta para escanear desde su app bancaria:</p>
+          <p class="text-xs text-blue-950 font-bold">
+            Pide a la clienta escanear este QR e ingresar el total que marca la caja (<strong id="codi-monto-indicar">$0.00 MXN</strong>):
+          </p>
           <div class="inline-block bg-white p-2.5 rounded-2xl border-2 border-blue-900 shadow-xs">
             <img id="codi-qr-img" src="" alt="Código QR CoDi" class="w-36 h-36 mx-auto" />
           </div>
           <p id="codi-clabe-display" class="text-[11px] font-mono font-bold text-blue-900"></p>
-          <p class="text-[11px] text-blue-700">Al recibir la notificación bancaria, presiona "Confirmar Cobro".</p>
+          <p class="text-[11px] text-blue-700">Al confirmar el depósito en pantalla, presiona "Confirmar Cobro".</p>
         </div>
 
         <!-- Panel dinámico para Pago Mixto -->
@@ -680,6 +814,19 @@
           <div>
             <label class="block font-bold text-stone-700 mb-1">Parte Digital / Tarjeta (MXN)</label>
             <input type="number" id="mixto-digital" min="0" step="any" value="0" class="w-full rounded-xl border border-stone-300 bg-white px-3 py-2 font-bold outline-none" />
+          </div>
+        </div>
+
+        <!-- Calculadora rápida de cambio para efectivo -->
+        <div id="panel-pago-efectivo-cambio" class="bg-emerald-50/70 border border-emerald-200 rounded-2xl p-3 flex flex-wrap items-center justify-between gap-2 text-xs">
+          <div class="flex items-center gap-2">
+            <label for="cobro-recibido-input" class="font-bold text-stone-700">Recibido en efectivo:</label>
+            <input type="number" id="cobro-recibido-input" min="0" step="any" placeholder="0.00" oninput="recalcularTotalCobro()"
+                   class="w-28 rounded-xl border border-stone-300 bg-white px-2.5 py-1.5 font-extrabold text-stone-900 outline-none" />
+          </div>
+          <div>
+            <span class="text-stone-600 font-semibold">Cambio a devolver: </span>
+            <strong id="cobro-cambio-display" class="text-sm font-extrabold text-emerald-800">$0.00 MXN</strong>
           </div>
         </div>
 
@@ -695,60 +842,127 @@
     </div>
   </div>
 
-  <!-- MODAL 3: AGENDAR / REAGENDAR CITA Y ADELANTO -->
-  <div id="modal-cita" class="fixed inset-0 z-50 hidden bg-stone-950/75 backdrop-blur-xs flex items-center justify-center p-4">
-    <div class="bg-white rounded-3xl max-w-md w-full border border-stone-200 shadow-2xl overflow-hidden">
-      <div class="bg-stone-900 text-white px-5 py-4 flex items-center justify-between">
-        <h3 id="cita-modal-title" class="text-base font-extrabold">Agendar / Editar Cita</h3>
-        <button type="button" onclick="cerrarModalCita()" class="text-stone-400 hover:text-white font-bold cursor-pointer">✕</button>
+  <!-- MODAL 3: CREAR / REAGENDAR CITA VISUAL CON MÚLTIPLES SERVICIOS (+ y X), TELÉFONO Y CORREO -->
+  <div id="modal-cita" class="fixed inset-0 z-50 hidden bg-stone-950/75 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+    <div class="bg-white rounded-3xl max-w-2xl w-full border border-stone-200 shadow-2xl overflow-hidden my-4">
+      <!-- Cabecera elegante del modal de citas -->
+      <div class="bg-gradient-to-r from-stone-900 via-stone-800 to-emerald-950 text-white px-6 py-4 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-9 h-9 rounded-xl bg-white/10 border border-white/15 flex items-center justify-center text-amber-300 font-extrabold">
+            ✨
+          </div>
+          <div>
+            <span class="text-[10px] font-extrabold uppercase tracking-wider text-emerald-300 block">Agenda Meraki Studio</span>
+            <h3 id="cita-modal-title" class="text-lg font-extrabold">Nueva Cita</h3>
+          </div>
+        </div>
+        <button type="button" onclick="cerrarModalCita()" class="w-8 h-8 rounded-xl bg-white/10 hover:bg-white/20 text-stone-200 font-bold cursor-pointer">✕</button>
       </div>
-      <form onsubmit="guardarCitaForm(event)" class="p-5 space-y-3 text-xs sm:text-sm">
+
+      <form onsubmit="guardarCitaForm(event)" class="p-5 sm:p-6 space-y-4 text-xs sm:text-sm">
         <input type="hidden" id="cita-edit-id" />
+
+        <!-- Datos de la clienta -->
+        <div class="bg-stone-50 rounded-2xl p-4 border border-stone-200 space-y-3">
+          <p class="text-[11px] font-extrabold uppercase tracking-wider text-stone-500">1. Datos de la Clienta</p>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div>
+              <label class="block text-xs font-bold text-stone-700 mb-1">Nombre completo *</label>
+              <input type="text" id="cita-cliente" required placeholder="Ej. Valeria Montes"
+                     class="w-full rounded-xl border border-stone-300 bg-white px-3 py-2 font-semibold outline-none focus:border-emerald-600" />
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-stone-700 mb-1">Teléfono / WhatsApp *</label>
+              <input type="tel" id="cita-telefono" required placeholder="Ej. 656 123 4567"
+                     class="w-full rounded-xl border border-stone-300 bg-white px-3 py-2 font-semibold outline-none focus:border-emerald-600" />
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-stone-700 mb-1">Correo electrónico</label>
+              <input type="email" id="cita-correo" placeholder="clienta@correo.com"
+                     class="w-full rounded-xl border border-stone-300 bg-white px-3 py-2 font-semibold outline-none focus:border-emerald-600" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Fecha, Hora y Especialista -->
+        <div class="bg-stone-50 rounded-2xl p-4 border border-stone-200 space-y-3">
+          <p class="text-[11px] font-extrabold uppercase tracking-wider text-stone-500">2. Fecha, Hora y Especialista</p>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div>
+              <label class="block text-xs font-bold text-stone-700 mb-1">Fecha *</label>
+              <input type="date" id="cita-fecha" required
+                     class="w-full rounded-xl border border-stone-300 bg-white px-3 py-2 font-semibold outline-none focus:border-emerald-600" />
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-stone-700 mb-1">Hora *</label>
+              <input type="time" id="cita-hora" required value="11:00"
+                     class="w-full rounded-xl border border-stone-300 bg-white px-3 py-2 font-semibold outline-none focus:border-emerald-600" />
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-stone-700 mb-1">Especialista Asignada *</label>
+              <select id="cita-especialista" required class="w-full rounded-xl border border-stone-300 bg-white px-3 py-2 font-semibold outline-none focus:border-emerald-600"></select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Selección visual de múltiples servicios con "+" y "X" -->
+        <div class="bg-emerald-50/50 rounded-2xl p-4 border border-emerald-200 space-y-3">
+          <div class="flex items-center justify-between gap-2">
+            <div>
+              <p class="text-[11px] font-extrabold uppercase tracking-wider text-emerald-800">3. Servicios de la Cita (Uno o Varios)</p>
+              <p class="text-[11px] text-stone-600">Usa <strong>+ Añadir servicio</strong> si la clienta agenda más de un tratamiento en su visita.</p>
+            </div>
+            <button type="button" onclick="agregarFilaServicioCita()"
+                    class="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-extrabold shadow-xs transition cursor-pointer shrink-0">
+              <span>+</span>
+              <span>Añadir servicio</span>
+            </button>
+          </div>
+
+          <!-- Lista dinámica de filas de servicios -->
+          <div id="cita-servicios-rows" class="space-y-2"></div>
+
+          <!-- Tarjetas rápidas visuales de catálogo (1 clic para añadir) -->
+          <div class="pt-1">
+            <span class="block text-[10px] font-extrabold uppercase tracking-wider text-stone-500 mb-1.5">Catálogo rápido (toca para agregar):</span>
+            <div id="cita-catalogo-visual" class="flex flex-wrap gap-1.5 max-h-28 overflow-y-auto"></div>
+          </div>
+        </div>
+
+        <!-- Pago parcial / Adelanto: SOLO visible en Caja / Manager / Admin (NUNCA para Especialistas) -->
+        <div id="cita-adelanto-wrapper" class="bg-amber-50 border border-amber-200 rounded-2xl p-3.5 space-y-1.5">
+          <div class="flex items-center justify-between">
+            <label class="text-xs font-extrabold text-amber-950">Pago Parcial / Adelanto dejado en Caja (MXN)</label>
+            <span class="px-2 py-0.5 rounded-full bg-amber-200 text-amber-950 text-[10px] font-extrabold uppercase">Solo Caja</span>
+          </div>
+          <input type="number" id="cita-adelanto" min="0" step="any" value="0"
+                 class="w-full rounded-xl border border-amber-300 bg-white px-3 py-2 font-extrabold text-stone-900 outline-none" />
+        </div>
+
         <div>
-          <label class="block text-xs font-bold text-stone-700 mb-1">Nombre de la Clienta / Cliente</label>
-          <input type="text" id="cita-cliente" required placeholder="Ej. Valeria Montes"
+          <label class="block text-xs font-bold text-stone-700 mb-1">Notas técnicas o preferencias</label>
+          <input type="text" id="cita-notas" placeholder="Ej. Piel sensible / Diseño natural / Alergias"
                  class="w-full rounded-xl border border-stone-300 bg-stone-50 px-3 py-2 outline-none focus:border-emerald-600" />
         </div>
-        <div class="grid grid-cols-2 gap-2.5">
-          <div>
-            <label class="block text-xs font-bold text-stone-700 mb-1">Fecha</label>
-            <input type="date" id="cita-fecha" required
-                   class="w-full rounded-xl border border-stone-300 bg-stone-50 px-3 py-2 outline-none focus:border-emerald-600" />
-          </div>
-          <div>
-            <label class="block text-xs font-bold text-stone-700 mb-1">Hora</label>
-            <input type="time" id="cita-hora" required value="11:00"
-                   class="w-full rounded-xl border border-stone-300 bg-stone-50 px-3 py-2 outline-none focus:border-emerald-600" />
-          </div>
-        </div>
-        <div>
-          <label class="block text-xs font-bold text-stone-700 mb-1">Especialista Asignada</label>
-          <select id="cita-especialista" required class="w-full rounded-xl border border-stone-300 bg-stone-50 px-3 py-2 font-semibold outline-none"></select>
-        </div>
-        <div>
-          <label class="block text-xs font-bold text-stone-700 mb-1">Servicio</label>
-          <select id="cita-servicio" required class="w-full rounded-xl border border-stone-300 bg-stone-50 px-3 py-2 font-semibold outline-none"></select>
-        </div>
-        <div id="cita-adelanto-wrapper">
-          <label class="block text-xs font-bold text-stone-700 mb-1">Adelanto / Anticipo recibido en caja (MXN)</label>
-          <input type="number" id="cita-adelanto" min="0" step="any" value="0"
-                 class="w-full rounded-xl border border-stone-300 bg-stone-50 px-3 py-2 font-semibold outline-none" />
-        </div>
-        <div>
-          <label class="block text-xs font-bold text-stone-700 mb-1">Notas técnicas (sin precios)</label>
-          <input type="text" id="cita-notas" placeholder="Ej. Piel sensible / Diseño natural"
-                 class="w-full rounded-xl border border-stone-300 bg-stone-50 px-3 py-2 outline-none" />
-        </div>
-        <div class="flex justify-end gap-2 pt-2">
-          <button type="button" onclick="cerrarModalCita()" class="px-4 py-2 rounded-xl bg-stone-100 text-stone-700 font-bold cursor-pointer">Cancelar</button>
-          <button type="submit" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold cursor-pointer">Guardar Cita</button>
+
+        <div class="flex justify-end gap-2 pt-2 border-t border-stone-100">
+          <button type="button" onclick="cerrarModalCita()" class="px-4 py-2.5 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-700 font-bold cursor-pointer">
+            Cancelar
+          </button>
+          <button type="submit" class="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold shadow-md cursor-pointer">
+            ✓ Guardar Cita
+          </button>
         </div>
       </form>
     </div>
   </div>
 
   <script>
-    const STORAGE_KEY = "meraki_portable_pos_state_v1";
+    const STORAGE_KEY = "meraki_portable_pos_state_v2";
+    const MERAKI_SHEET_URL = "https://docs.google.com/spreadsheets/d/1y6xm0uutO5NG6ylmQJ2Kc6eYQlAAZmznuIxQG22E_BE/edit?usp=sharing";
+
+    // Fallback SVG elegante del logo Meraki si aún no se encuentra logo.png local
+    const MERAKI_FALLBACK_LOGO = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 120'%3E%3Cdefs%3E%3ClinearGradient id='mg' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0%25' stop-color='%23065f46'/%3E%3Cstop offset='100%25' stop-color='%23115e59'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='120' height='120' rx='28' fill='url(%23mg)'/%3E%3Ccircle cx='60' cy='60' r='44' fill='none' stroke='%23fcd34d' stroke-width='2.5' stroke-opacity='0.6'/%3E%3Cpath d='M32 78V42l28 24 28-24v36' fill='none' stroke='%23ffffff' stroke-width='7' stroke-linecap='round' stroke-linejoin='round'/%3E%3Ccircle cx='60' cy='28' r='4' fill='%23fcd34d'/%3E%3C/svg%3E";
 
     function hoyISO() {
       const d = new Date();
@@ -760,35 +974,94 @@
       return d.toTimeString().slice(0, 5);
     }
 
+    // Catálogo completo con costos de Meraki Studio (preservando sus servicios reales)
+    const MERAKI_CATALOGO_SERVICIOS = [
+      { id: "srv-1", name: "Masaje Relajante 40 min", category: "Spa & Masajes", price: 650 },
+      { id: "srv-2", name: "Masaje Relajante 60 min", category: "Spa & Masajes", price: 850 },
+      { id: "srv-3", name: "Masaje Descontracturante", category: "Spa & Masajes", price: 900 },
+      { id: "srv-4", name: "Drenaje Linfático Manual", category: "Spa & Masajes", price: 850 },
+      { id: "srv-5", name: "Masaje con Piedras Calientes", category: "Spa & Masajes", price: 950 },
+      { id: "srv-6", name: "Limpieza Facial Profunda", category: "Faciales", price: 700 },
+      { id: "srv-7", name: "Facial Hidratante & Luminosidad", category: "Faciales", price: 750 },
+      { id: "srv-8", name: "Dermaplaning Facial", category: "Faciales", price: 800 },
+      { id: "srv-9", name: "Pestañas Clásicas", category: "Mirada", price: 700 },
+      { id: "srv-10", name: "Pestañas Hawaianas / Rímel", category: "Mirada", price: 750 },
+      { id: "srv-11", name: "Pestañas Volumen Tecnológico", category: "Mirada", price: 850 },
+      { id: "srv-12", name: "Lash Lifting + Tinte", category: "Mirada", price: 550 },
+      { id: "srv-13", name: "Diseño y Laminado de Ceja", category: "Mirada", price: 480 },
+      { id: "srv-14", name: "Manicura Rusa + Gel", category: "Uñas", price: 480 },
+      { id: "srv-15", name: "Uñas Acrílicas / Soft Gel", category: "Uñas", price: 650 },
+      { id: "srv-16", name: "Retoque de Uñas + Gel", category: "Uñas", price: 450 },
+      { id: "srv-17", name: "Pedicura Spa con Gelish", category: "Pies", price: 520 },
+      { id: "srv-18", name: "Pedicura Clínico / Reconstructivo", category: "Pies", price: 600 }
+    ];
+
     const DEFAULT_STATE = {
       config: {
         businessName: "Meraki Studio",
         exchangeRate: 19.50,
-        codiClabe: "012180001234567890 · MERAKI STUDIO"
+        codiClabe: "012180001234567890 · MERAKI STUDIO",
+        sheetsWebhookUrl: "",
+        sheetUrl: MERAKI_SHEET_URL
       },
       employees: [
-        { id: "emp-sofia", name: "Sofía (Spa)", pin: "1111", role: "especialista", payType: "porcentaje", payValue: 40 },
-        { id: "emp-camila", name: "Camila (Uñas)", pin: "2222", role: "especialista", payType: "hora", payValue: 95 },
-        { id: "emp-tia", name: "Tía (Caja)", pin: "3333", role: "caja", payType: "dia", payValue: 550 },
-        { id: "emp-hermana", name: "Hermana (Dueña)", pin: "9999", role: "duena", payType: "porcentaje", payValue: 0 },
-        { id: "emp-admin", name: "Admin Sistema", pin: "0000", role: "admin", payType: "porcentaje", payValue: 0 }
+        {
+          id: "emp-sofia",
+          name: "Sofía (Spa)",
+          pin: "1111",
+          role: "especialista",
+          payType: "porcentaje",
+          payValue: 40,
+          assignedServices: ["srv-1", "srv-2", "srv-3", "srv-4", "srv-5", "srv-6", "srv-7", "srv-8"]
+        },
+        {
+          id: "emp-camila",
+          name: "Camila (Uñas)",
+          pin: "2222",
+          role: "especialista",
+          payType: "hora",
+          payValue: 95,
+          assignedServices: ["srv-9", "srv-10", "srv-11", "srv-12", "srv-13", "srv-14", "srv-15", "srv-16", "srv-17", "srv-18"]
+        },
+        {
+          id: "emp-tia",
+          name: "Tía (Caja)",
+          pin: "3333",
+          role: "caja",
+          payType: "dia",
+          payValue: 550,
+          assignedServices: []
+        },
+        {
+          id: "emp-hermana",
+          name: "Hermana (Manager)",
+          pin: "9999",
+          role: "manager",
+          payType: "porcentaje",
+          payValue: 0,
+          assignedServices: []
+        },
+        {
+          id: "emp-admin",
+          name: "Admin Sistema",
+          pin: "0000",
+          role: "admin",
+          payType: "porcentaje",
+          payValue: 0,
+          assignedServices: []
+        }
       ],
-      services: [
-        { id: "srv-1", name: "Masaje Relajante 40 min", category: "Spa & Masajes", price: 650 },
-        { id: "srv-2", name: "Drenaje Linfático Manual", category: "Spa & Masajes", price: 850 },
-        { id: "srv-3", name: "Limpieza Facial Profunda", category: "Faciales", price: 700 },
-        { id: "srv-4", name: "Pestañas Clásicas / Hawaianas", category: "Mirada", price: 750 },
-        { id: "srv-5", name: "Manicura Rusa + Gel", category: "Uñas", price: 480 },
-        { id: "srv-6", name: "Pedicura Spa con Gelish", category: "Pies", price: 520 }
-      ],
+      services: MERAKI_CATALOGO_SERVICIOS,
       appointments: [
         {
           id: "cit-101",
           client: "Fernanda Ríos",
+          phone: "656 234 8812",
+          email: "fernanda.rios@correo.com",
           date: hoyISO(),
           time: "10:30",
           employeeId: "emp-sofia",
-          serviceId: "srv-1",
+          serviceIds: ["srv-1", "srv-6"],
           advancePaid: 200,
           notes: "Prefiere aroma lavanda y presión media",
           status: "agendada"
@@ -796,12 +1069,14 @@
         {
           id: "cit-102",
           client: "Daniela Cruz",
+          phone: "656 891 3045",
+          email: "daniela.cruz@correo.com",
           date: hoyISO(),
           time: "12:00",
           employeeId: "emp-camila",
-          serviceId: "srv-5",
+          serviceIds: ["srv-14", "srv-17"],
           advancePaid: 0,
-          notes: "Tono nude natural",
+          notes: "Tono nude natural en manos y pies",
           status: "agendada"
         }
       ],
@@ -810,7 +1085,7 @@
           id: "cola-201",
           client: "Andrea Lozano",
           employeeId: "emp-sofia",
-          serviceId: "srv-3",
+          serviceId: "srv-6",
           serviceName: "Limpieza Facial Profunda",
           price: 700,
           advancePaid: 0,
@@ -851,6 +1126,26 @@
     let activeModule = "";
     let currentTipMode = "ninguna";
     let currentTipValue = 0;
+    let calendarMonthCursor = new Date();
+    let selectedCalendarDate = hoyISO();
+    let pendingDeleteEmpId = null;
+
+    function normalizarCitaServicios(cita) {
+      if (Array.isArray(cita.serviceIds) && cita.serviceIds.length > 0) {
+        return cita.serviceIds;
+      }
+      if (cita.serviceId) {
+        return [cita.serviceId];
+      }
+      return [];
+    }
+
+    function obtenerEtiquetaRol(role) {
+      if (role === "duena" || role === "manager") return "Manager";
+      if (role === "especialista") return "Especialista";
+      if (role === "caja") return "Caja";
+      return "Admin";
+    }
 
     function loadState() {
       try {
@@ -862,6 +1157,12 @@
         }
         const parsed = JSON.parse(raw);
         appState = Object.assign({}, JSON.parse(JSON.stringify(DEFAULT_STATE)), parsed);
+        // Migrar cualquier rol antiguo 'duena' a 'manager'
+        appState.employees = (appState.employees || []).map(e => ({
+          ...e,
+          role: e.role === "duena" ? "manager" : e.role,
+          assignedServices: Array.isArray(e.assignedServices) ? e.assignedServices : []
+        }));
       } catch (e) {
         appState = JSON.parse(JSON.stringify(DEFAULT_STATE));
       }
@@ -901,22 +1202,50 @@
         .replace(/'/g, "&#39;");
     }
 
-    // --- LÓGICA DE LOGIN POR PIN ---
+    // Sincronización no destructiva con Google Sheets (append de citas y cobros)
+    async function enviarAGoogleSheets(tipoRegistro, datos) {
+      const webhook = (appState.config.sheetsWebhookUrl || "").trim();
+      if (!webhook) return;
+      try {
+        await fetch(webhook, {
+          method: "POST",
+          mode: "no-cors",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            spreadsheetUrl: MERAKI_SHEET_URL,
+            mode: "append_only",
+            tipo: tipoRegistro,
+            timestamp: new Date().toISOString(),
+            data: datos
+          })
+        });
+      } catch (err) {
+        console.warn("Sincronización en segundo plano pendiente:", err);
+      }
+    }
+
+    // --- LÓGICA DE LOGIN POR PIN (SIN MOSTRAR PIN EN PANTALLA) ---
     function renderDemoPins() {
       const container = document.getElementById("demo-pins-list");
       if (!container) return;
-      container.innerHTML = appState.employees.map(emp => `
-        <button type="button" onclick="accesoRapidoDemo('${escapeHtml(emp.pin)}')"
-                class="flex items-center justify-between p-3 rounded-2xl bg-stone-50 hover:bg-emerald-50 border border-stone-200 hover:border-emerald-300 text-left transition cursor-pointer">
-          <div>
-            <span class="block text-xs font-extrabold text-stone-900">${escapeHtml(emp.name)}</span>
-            <span class="block text-[10px] uppercase font-bold text-stone-500">${escapeHtml(emp.role)}</span>
+      container.innerHTML = appState.employees.map(emp => {
+        const estadoTurno = obtenerEstadoAsistenciaHoy(emp.id);
+        const dotClass = estadoTurno === "activo" ? "bg-emerald-500" : "bg-rose-500";
+        return `
+          <div class="flex items-center justify-between p-3.5 rounded-2xl bg-stone-50 border border-stone-200 text-left">
+            <div class="flex items-center gap-2.5">
+              <span class="w-2.5 h-2.5 rounded-full ${dotClass}" title="${estadoTurno === 'activo' ? 'En turno' : 'Fuera de turno'}"></span>
+              <div>
+                <span class="block text-xs sm:text-sm font-extrabold text-stone-900">${escapeHtml(emp.name)}</span>
+                <span class="block text-[10px] uppercase font-bold text-stone-500">${escapeHtml(obtenerEtiquetaRol(emp.role))}</span>
+              </div>
+            </div>
+            <span class="px-2.5 py-1 rounded-xl bg-stone-200/80 text-stone-600 text-[10px] font-bold uppercase">
+              PIN Privado
+            </span>
           </div>
-          <span class="px-2.5 py-1 rounded-xl bg-stone-900 text-amber-300 font-mono text-xs font-extrabold">
-            ${escapeHtml(emp.pin)}
-          </span>
-        </button>
-      `).join("");
+        `;
+      }).join("");
     }
 
     function agregarDigitoPin(digito) {
@@ -940,11 +1269,6 @@
       }
     }
 
-    function accesoRapidoDemo(pin) {
-      pinBuffer = pin;
-      validarAccesoPin();
-    }
-
     function validarAccesoPin() {
       const found = appState.employees.find(e => String(e.pin) === String(pinBuffer));
       if (!found) {
@@ -966,7 +1290,7 @@
       document.getElementById("btn-logout").classList.remove("hidden");
 
       document.getElementById("active-user-name").textContent = found.name;
-      document.getElementById("active-user-role").textContent = found.role;
+      document.getElementById("active-user-role").textContent = obtenerEtiquetaRol(found.role);
 
       configurarNavegacionPorRol(found.role);
       showToast(`Bienvenido(a), ${found.name}`);
@@ -992,13 +1316,13 @@
         allowedTabs.push({ id: "especialista", label: "✨ Mis Citas y Ganancias" });
       } else if (role === "caja") {
         allowedTabs.push({ id: "caja", label: "💵 Registradora y Calendario" });
-      } else if (role === "duena") {
-        allowedTabs.push({ id: "dashboard", label: "📊 Dashboard Contable y Corte" });
+      } else if (role === "manager" || role === "duena") {
+        allowedTabs.push({ id: "dashboard", label: "📊 Dashboard, Agenda y Corte" });
         allowedTabs.push({ id: "caja", label: "💵 Caja y Calendario" });
-        allowedTabs.push({ id: "admin", label: "⚙ Administración" });
+        allowedTabs.push({ id: "admin", label: "⚙ Administración y Equipo" });
       } else {
-        allowedTabs.push({ id: "admin", label: "⚙ Administración" });
-        allowedTabs.push({ id: "dashboard", label: "📊 Dashboard Contable" });
+        allowedTabs.push({ id: "admin", label: "⚙ Administración y Equipo" });
+        allowedTabs.push({ id: "dashboard", label: "📊 Dashboard y Agenda" });
         allowedTabs.push({ id: "caja", label: "💵 Caja y Calendario" });
         allowedTabs.push({ id: "especialista", label: "✨ Vista Especialista" });
       }
@@ -1038,6 +1362,35 @@
       if (modId === "admin") renderizarAdmin();
     }
 
+    // --- ESTADO DE ASISTENCIA (BOTÓN VERDE ENTRADA / ROJO SALIDA) ---
+    function obtenerEstadoAsistenciaHoy(employeeId) {
+      const hoy = hoyISO();
+      const logsHoy = appState.timeLogs.filter(l => l.employeeId === employeeId && l.date === hoy);
+      if (logsHoy.length === 0) return "fuera";
+      const ultimo = logsHoy[0]; // Se insertan con unshift (más reciente primero)
+      if (ultimo.type === "entrada" || ultimo.type === "regreso_descanso") return "activo";
+      return "fuera";
+    }
+
+    function marcarAsistenciaRapidaManager(employeeId, tipo) {
+      const emp = appState.employees.find(e => e.id === employeeId);
+      if (!emp) return;
+
+      appState.timeLogs.unshift({
+        id: "log-" + Date.now(),
+        employeeId: emp.id,
+        date: hoyISO(),
+        type: tipo,
+        time: horaActual()
+      });
+
+      saveState();
+      renderizarAdmin();
+      showToast(tipo === "entrada"
+        ? `🟢 ${emp.name}: Entrada marcada (${horaActual()})`
+        : `🔴 ${emp.name}: Salida marcada (${horaActual()})`);
+    }
+
     // --- CÁLCULO DE HORAS EFECTIVAS DEL CHECADOR ---
     function calcularHorasTrabajadas(employeeId, fechaInicio, fechaFin) {
       const logs = appState.timeLogs
@@ -1072,7 +1425,6 @@
           }
         });
 
-        // Si sigue en turno activo hoy, suma hasta la hora actual
         if (activeStart !== null && date === hoyISO()) {
           const now = new Date();
           const nowMins = now.getHours() * 60 + now.getMinutes();
@@ -1090,7 +1442,7 @@
 
     function obtenerRangoSemanaActual() {
       const hoy = new Date();
-      const day = hoy.getDay(); // 0 dom .. 6 sab
+      const day = hoy.getDay();
       const diffToMon = (day === 0 ? -6 : 1 - day);
       const monday = new Date(hoy);
       monday.setDate(hoy.getDate() + diffToMon);
@@ -1130,59 +1482,91 @@
       };
     }
 
-    // --- VISTA ESPECIALISTA (SIN PRECIOS PREVIOS) ---
+    // --- VISTA ESPECIALISTA (FEED EN VIVO SIN PRECIOS + MÚLTIPLES SERVICIOS POR CITA + SIN BLOQUES EXTRA) ---
     function renderizarVistaEspecialista() {
+      const switcherBox = document.getElementById("esp-admin-switcher");
+      const switcherSel = document.getElementById("esp-switcher-select");
+      const especialistas = appState.employees.filter(e => e.role === "especialista");
+
+      if (currentUser.role !== "especialista" && especialistas.length > 0) {
+        switcherBox.classList.remove("hidden");
+        const prevVal = switcherSel.value;
+        switcherSel.innerHTML = especialistas.map(e => `<option value="${escapeHtml(e.id)}">${escapeHtml(e.name)}</option>`).join("");
+        if (prevVal && especialistas.some(e => e.id === prevVal)) {
+          switcherSel.value = prevVal;
+        }
+      } else {
+        switcherBox.classList.add("hidden");
+      }
+
       const targetEmp = currentUser.role === "especialista"
         ? currentUser
-        : (appState.employees.find(e => e.role === "especialista") || currentUser);
+        : (especialistas.find(e => e.id === switcherSel.value) || especialistas[0] || currentUser);
 
       const hoy = hoyISO();
       const semana = obtenerRangoSemanaActual();
 
-      // Citas agendadas del especialista (SIN mostrar precios ni adelantos)
-      const citas = appState.appointments.filter(
-        a => a.employeeId === targetEmp.id && a.status === "agendada"
-      );
+      // Feed en tiempo real de citas agendadas (SIN precios ni adelantos)
+      const citas = appState.appointments
+        .filter(a => a.employeeId === targetEmp.id && a.status === "agendada")
+        .sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time));
+
       const citasEl = document.getElementById("esp-citas-list");
       if (citas.length === 0) {
-        citasEl.innerHTML = '<p class="text-xs text-stone-500 py-4 text-center">No tienes citas pendientes en este momento.</p>';
+        citasEl.innerHTML = '<p class="text-xs text-stone-500 py-8 text-center bg-stone-50 rounded-2xl border border-dashed border-stone-200">No tienes citas pendientes por atender en este momento.</p>';
       } else {
         citasEl.innerHTML = citas.map(c => {
-          const srv = appState.services.find(s => s.id === c.serviceId);
-          return `
-            <div class="p-4 rounded-2xl bg-stone-50 border border-stone-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <div class="space-y-1">
-                <div class="flex items-center gap-2">
-                  <span class="px-2.5 py-0.5 rounded-full bg-stone-900 text-amber-300 text-xs font-extrabold">${escapeHtml(c.time)}</span>
-                  <span class="text-xs font-bold text-stone-500">${escapeHtml(c.date)}</span>
-                </div>
-                <h3 class="text-base font-extrabold text-stone-900">${escapeHtml(c.client)}</h3>
-                <p class="text-xs font-bold text-emerald-700">${escapeHtml(srv ? srv.name : "Servicio asignado")}</p>
-                ${c.notes ? `<p class="text-xs text-stone-600">Nota: ${escapeHtml(c.notes)}</p>` : ""}
+          const srvIds = normalizarCitaServicios(c);
+          const tieneVarios = srvIds.length > 1;
+
+          const serviciosHtml = srvIds.map((sId, idx) => {
+            const srv = appState.services.find(s => s.id === sId);
+            const srvName = srv ? srv.name : "Servicio";
+            return `
+              <div class="flex items-center justify-between gap-2 bg-white px-3 py-2 rounded-xl border border-stone-200">
+                <span class="text-xs font-extrabold text-emerald-800">${escapeHtml(srvName)}</span>
+                <button type="button" onclick="marcarServicioIndividualTerminado('${escapeHtml(c.id)}', ${idx})"
+                        class="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white text-[11px] font-extrabold shadow-xs transition cursor-pointer shrink-0">
+                  ✓ Terminado → Caja
+                </button>
               </div>
-              <button type="button" onclick="marcarCitaTerminada('${escapeHtml(c.id)}')"
-                      class="px-4 py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white text-xs sm:text-sm font-extrabold shadow-md transition cursor-pointer shrink-0">
-                ✓ Terminado → Caja
-              </button>
+            `;
+          }).join("");
+
+          return `
+            <div class="p-4 rounded-2xl bg-stone-50 border border-stone-200 space-y-3">
+              <div class="flex flex-wrap items-start justify-between gap-2">
+                <div class="space-y-1">
+                  <div class="flex items-center gap-2">
+                    <span class="px-2.5 py-0.5 rounded-full bg-stone-900 text-amber-300 text-xs font-extrabold">${escapeHtml(c.time)}</span>
+                    <span class="text-xs font-bold text-stone-500">${escapeHtml(c.date)}</span>
+                    ${tieneVarios ? `<span class="px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 text-[10px] font-extrabold">${srvIds.length} servicios</span>` : ""}
+                  </div>
+                  <h3 class="text-base font-extrabold text-stone-900">${escapeHtml(c.client)}</h3>
+                  ${c.notes ? `<p class="text-xs text-stone-600">Nota: ${escapeHtml(c.notes)}</p>` : ""}
+                </div>
+
+                <!-- Acciones de reagendar o cancelar si solo se hizo un servicio y la clienta se tuvo que ir -->
+                <div class="flex items-center gap-1.5">
+                  <button type="button" onclick="editarCitaModal('${escapeHtml(c.id)}')"
+                          class="px-2.5 py-1.5 rounded-xl bg-white hover:bg-stone-100 border border-stone-300 text-[11px] font-bold text-stone-700 cursor-pointer">
+                    Reagendar
+                  </button>
+                  <button type="button" onclick="cancelarCitaRestante('${escapeHtml(c.id)}')"
+                          class="px-2.5 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 border border-rose-200 text-[11px] font-bold text-rose-700 cursor-pointer">
+                    Cancelar
+                  </button>
+                </div>
+              </div>
+
+              <!-- Lista individual de servicios de la cita para cobrar solo lo realizado -->
+              <div class="space-y-1.5">
+                ${serviciosHtml}
+              </div>
             </div>
           `;
         }).join("");
       }
-
-      // Servicios rápidos sin mostrar precios
-      const srvEl = document.getElementById("esp-servicios-rapidos");
-      srvEl.innerHTML = appState.services.map(s => `
-        <button type="button" onclick="enviarServicioRapidoACaja('${escapeHtml(targetEmp.id)}', '${escapeHtml(s.id)}')"
-                class="p-3.5 rounded-2xl bg-stone-50 hover:bg-emerald-50 border border-stone-200 hover:border-emerald-300 text-left flex items-center justify-between gap-2 transition cursor-pointer">
-          <div>
-            <span class="block text-[10px] font-extrabold uppercase text-stone-400">${escapeHtml(s.category)}</span>
-            <span class="block text-xs sm:text-sm font-extrabold text-stone-900">${escapeHtml(s.name)}</span>
-          </div>
-          <span class="px-2.5 py-1 rounded-xl bg-emerald-600 text-white text-[11px] font-extrabold shrink-0">
-            Terminado
-          </span>
-        </button>
-      `).join("");
 
       // Transparencia en "Mis Ganancias"
       const esquemaTxt = targetEmp.payType === "porcentaje"
@@ -1206,64 +1590,194 @@
       const pendientesCobro = appState.readyToPay.filter(r => r.employeeId === targetEmp.id).length;
       document.getElementById("esp-pendientes-cobro-count").textContent = pendientesCobro;
       document.getElementById("esp-horas-hoy").textContent = `${ganHoy.hours} hrs`;
-
-      // Historial de servicios de hoy
-      const histEl = document.getElementById("esp-historial-hoy");
-      const cobradosHoy = appState.tickets.filter(t => t.employeeId === targetEmp.id && t.date === hoy);
-      if (cobradosHoy.length === 0) {
-        histEl.innerHTML = '<p class="text-stone-500">Aún no hay servicios liquidados en caja hoy.</p>';
-      } else {
-        histEl.innerHTML = cobradosHoy.map(t => `
-          <div class="p-2.5 rounded-xl bg-stone-50 border border-stone-200 flex items-center justify-between">
-            <div>
-              <strong class="text-stone-900">${escapeHtml(t.serviceName)}</strong>
-              <span class="block text-[11px] text-stone-500">${escapeHtml(t.client)} · ${escapeHtml(t.time)}</span>
-            </div>
-            <span class="text-amber-700 font-extrabold">Propina: ${formatMoney(t.tipAmount)}</span>
-          </div>
-        `).join("");
-      }
     }
 
-    function marcarCitaTerminada(citaId) {
+    // Marca UN servicio específico de la cita como terminado:
+    // Si hay otros servicios en esa cita (ej. uñas + pedi) y la clienta se va, los demás se quedan en agenda para reagendar o cancelar, y en caja solo se cobra lo que sí se hizo.
+    function marcarServicioIndividualTerminado(citaId, serviceIndex) {
       const idx = appState.appointments.findIndex(a => a.id === citaId);
       if (idx === -1) return;
       const cita = appState.appointments[idx];
-      const srv = appState.services.find(s => s.id === cita.serviceId);
+      const srvIds = normalizarCitaServicios(cita);
+      const targetSrvId = srvIds[serviceIndex];
+      if (!targetSrvId) return;
 
-      cita.status = "en_caja";
+      const srv = appState.services.find(s => s.id === targetSrvId);
+      const adelantoAplicar = Number(cita.advancePaid || 0);
+
+      // Si había un adelanto en la cita, se aplica al primer servicio que pasa a caja y se pone en 0 para los restantes
+      cita.advancePaid = 0;
+
       appState.readyToPay.unshift({
-        id: "cola-" + Date.now(),
+        id: "cola-" + Date.now() + "-" + Math.floor(Math.random() * 100),
         client: cita.client,
         employeeId: cita.employeeId,
-        serviceId: cita.serviceId,
+        serviceId: targetSrvId,
         serviceName: srv ? srv.name : "Servicio",
         price: srv ? Number(srv.price) : 0,
-        advancePaid: Number(cita.advancePaid || 0),
+        advancePaid: adelantoAplicar,
         finishedAt: horaActual()
       });
 
+      // Quitar solo el servicio ya terminado de la cita; los pendientes se conservan
+      srvIds.splice(serviceIndex, 1);
+      cita.serviceIds = srvIds;
+
+      if (srvIds.length === 0) {
+        cita.status = "en_caja";
+        showToast(`✓ "${srv ? srv.name : "Servicio"}" enviado a Caja.`);
+      } else {
+        showToast(`✓ "${srv ? srv.name : "Servicio"}" enviado a Caja. Queda(n) ${srvIds.length} servicio(s) pendiente(s) por atender o reagendar.`);
+      }
+
       saveState();
-      renderizarVistaEspecialista();
-      showToast("✓ Servicio marcado terminado y enviado directo a Caja.");
+      if (activeModule === "especialista") renderizarVistaEspecialista();
+      if (activeModule === "caja") renderizarCaja();
+      if (activeModule === "dashboard") renderizarDashboard();
     }
 
-    function enviarServicioRapidoACaja(employeeId, serviceId) {
-      const srv = appState.services.find(s => s.id === serviceId);
-      if (!srv) return;
-      appState.readyToPay.unshift({
-        id: "cola-" + Date.now(),
-        client: "Clienta en Salón",
-        employeeId: employeeId,
-        serviceId: srv.id,
-        serviceName: srv.name,
-        price: Number(srv.price),
-        advancePaid: 0,
-        finishedAt: horaActual()
-      });
+    function cancelarCitaRestante(citaId) {
+      const idx = appState.appointments.findIndex(a => a.id === citaId);
+      if (idx === -1) return;
+      appState.appointments[idx].status = "cancelada";
       saveState();
-      renderizarVistaEspecialista();
-      showToast(`✓ "${srv.name}" enviado a Caja.`);
+      if (activeModule === "especialista") renderizarVistaEspecialista();
+      if (activeModule === "caja") renderizarCaja();
+      if (activeModule === "dashboard") renderizarDashboard();
+      showToast("Cita pendiente cancelada.");
+    }
+
+    // --- CALENDARIO VISUAL COMPARTIDO (CAJA Y MANAGER) ---
+    function renderizarCalendarioVisual(containerId, targetMode) {
+      const container = document.getElementById(containerId);
+      if (!container) return;
+
+      const year = calendarMonthCursor.getFullYear();
+      const month = calendarMonthCursor.getMonth();
+      const meses = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+      const firstDay = new Date(year, month, 1).getDay();
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+      const hoy = hoyISO();
+
+      // Contar citas agendadas por fecha
+      const conteoPorFecha = {};
+      appState.appointments
+        .filter(a => a.status === "agendada")
+        .forEach(a => {
+          conteoPorFecha[a.date] = (conteoPorFecha[a.date] || 0) + 1;
+        });
+
+      let gridCells = "";
+      for (let i = 0; i < firstDay; i++) {
+        gridCells += `<div class="h-10"></div>`;
+      }
+
+      for (let d = 1; d <= daysInMonth; d++) {
+        const iso = `${year}-${String(month + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+        const count = conteoPorFecha[iso] || 0;
+        const isSelected = selectedCalendarDate === iso;
+        const isToday = iso === hoy;
+
+        let btnClass = "h-10 rounded-xl flex flex-col items-center justify-center text-xs font-bold transition cursor-pointer relative ";
+        if (isSelected) {
+          btnClass += "bg-stone-900 text-white shadow-xs";
+        } else if (isToday) {
+          btnClass += "bg-emerald-100 text-emerald-900 border border-emerald-300";
+        } else {
+          btnClass += "bg-white hover:bg-stone-100 text-stone-800 border border-stone-200/80";
+        }
+
+        gridCells += `
+          <button type="button" onclick="seleccionarFechaCalendario('${iso}')" class="${btnClass}">
+            <span>${d}</span>
+            ${count > 0 ? `<span class="w-1.5 h-1.5 rounded-full ${isSelected ? 'bg-amber-400' : 'bg-emerald-600'} mt-0.5"></span>` : ""}
+          </button>
+        `;
+      }
+
+      container.innerHTML = `
+        <div class="flex items-center justify-between mb-3">
+          <button type="button" onclick="cambiarMesCalendario(-1)" class="px-2.5 py-1 rounded-lg bg-white hover:bg-stone-200 border border-stone-300 text-xs font-extrabold cursor-pointer">◀</button>
+          <strong class="text-xs sm:text-sm font-extrabold text-stone-900">${meses[month]} ${year}</strong>
+          <button type="button" onclick="cambiarMesCalendario(1)" class="px-2.5 py-1 rounded-lg bg-white hover:bg-stone-200 border border-stone-300 text-xs font-extrabold cursor-pointer">▶</button>
+        </div>
+        <div class="grid grid-cols-7 gap-1 text-center text-[10px] font-extrabold uppercase text-stone-400 mb-1">
+          <span>Dom</span><span>Lun</span><span>Mar</span><span>Mié</span><span>Jue</span><span>Vie</span><span>Sáb</span>
+        </div>
+        <div class="grid grid-cols-7 gap-1">
+          ${gridCells}
+        </div>
+      `;
+    }
+
+    function cambiarMesCalendario(delta) {
+      calendarMonthCursor = new Date(calendarMonthCursor.getFullYear(), calendarMonthCursor.getMonth() + delta, 1);
+      if (activeModule === "caja") renderizarCaja();
+      if (activeModule === "dashboard") renderizarDashboard();
+    }
+
+    function seleccionarFechaCalendario(iso) {
+      selectedCalendarDate = iso;
+      if (activeModule === "caja") renderizarCaja();
+      if (activeModule === "dashboard") renderizarDashboard();
+    }
+
+    function renderizarTarjetasCitasAgendadas(containerEl, labelEl, permitirCobroRapido) {
+      let citasActivas = appState.appointments.filter(a => a.status === "agendada");
+      if (selectedCalendarDate && selectedCalendarDate !== "todas") {
+        citasActivas = citasActivas.filter(a => a.date === selectedCalendarDate);
+        if (labelEl) labelEl.textContent = `Citas Agendadas (${selectedCalendarDate})`;
+      } else {
+        if (labelEl) labelEl.textContent = "Todas las Citas Pendientes";
+      }
+
+      citasActivas.sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time));
+
+      if (citasActivas.length === 0) {
+        containerEl.innerHTML = '<p class="text-xs text-stone-500 py-4 text-center bg-stone-50 rounded-2xl border border-dashed border-stone-200">Sin citas agendadas para esta fecha.</p>';
+        return;
+      }
+
+      containerEl.innerHTML = citasActivas.map(c => {
+        const emp = appState.employees.find(e => e.id === c.employeeId);
+        const srvIds = normalizarCitaServicios(c);
+        const nombresSrv = srvIds.map(id => {
+          const s = appState.services.find(item => item.id === id);
+          return s ? s.name : "Servicio";
+        }).join(" + ");
+
+        return `
+          <div class="p-3.5 rounded-2xl bg-stone-50 border border-stone-200 flex flex-wrap items-center justify-between gap-2.5 text-xs">
+            <div class="space-y-0.5">
+              <div class="flex items-center gap-2 flex-wrap">
+                <span class="px-2 py-0.5 rounded-lg bg-stone-900 text-amber-300 font-extrabold">${escapeHtml(c.date)} · ${escapeHtml(c.time)}</span>
+                <strong class="text-stone-900 text-sm">${escapeHtml(c.client)}</strong>
+                ${c.phone ? `<span class="text-stone-500 font-semibold">📞 ${escapeHtml(c.phone)}</span>` : ""}
+              </div>
+              <p class="text-stone-700 font-semibold">
+                ${escapeHtml(nombresSrv)} · Con: <strong>${escapeHtml(emp ? emp.name : "")}</strong>
+              </p>
+              ${c.advancePaid > 0 ? `
+                <span class="inline-block px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 font-extrabold text-[11px]">
+                  Pago parcial / Adelanto en caja: ${formatMoney(c.advancePaid)}
+                </span>
+              ` : ""}
+            </div>
+            <div class="flex flex-wrap gap-1.5">
+              <button type="button" onclick="editarCitaModal('${escapeHtml(c.id)}')"
+                      class="px-2.5 py-1.5 rounded-xl bg-white hover:bg-stone-100 border border-stone-300 font-bold cursor-pointer">
+                Pago Parcial / Editar
+              </button>
+              ${permitirCobroRapido ? `
+                <button type="button" onclick="marcarServicioIndividualTerminado('${escapeHtml(c.id)}', 0)"
+                        class="px-2.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold cursor-pointer">
+                  Pasar a Cobro
+                </button>
+              ` : ""}
+            </div>
+          </div>
+        `;
+      }).join("");
     }
 
     // --- VISTA CAJA Y CALENDARIO GLOBAL ---
@@ -1282,7 +1796,6 @@
       document.getElementById("caja-kpi-digital").textContent = formatMoney(digitalMxn);
       document.getElementById("caja-kpi-propinas").textContent = formatMoney(propinasMxn);
       document.getElementById("caja-kpi-gastos").textContent = formatMoney(gastosTotal);
-      document.getElementById("caja-tc-label").textContent = `$${Number(appState.config.exchangeRate).toFixed(2)} MXN/USD`;
 
       // Cola de trabajos listos para cobrar
       const colaEl = document.getElementById("caja-cola-cobro");
@@ -1301,7 +1814,7 @@
                 <h3 class="text-base font-extrabold text-stone-900 mt-1">${escapeHtml(item.client)}</h3>
                 <p class="text-xs text-stone-700 font-semibold">
                   ${escapeHtml(item.serviceName)} — <strong class="text-emerald-700">${formatMoney(item.price)}</strong>
-                  ${item.advancePaid > 0 ? `<span class="text-amber-800"> (Adelanto: ${formatMoney(item.advancePaid)})</span>` : ""}
+                  ${item.advancePaid > 0 ? `<span class="block text-amber-800 font-extrabold mt-0.5">Pago parcial adelantado: -${formatMoney(item.advancePaid)}</span>` : ""}
                 </p>
               </div>
               <button type="button" onclick="abrirModalCobro('${escapeHtml(item.id)}')"
@@ -1313,38 +1826,13 @@
         }).join("");
       }
 
-      // Calendario Global de Citas
-      const citasEl = document.getElementById("caja-citas-globales");
-      const citasActivas = appState.appointments.filter(a => a.status === "agendada");
-      if (citasActivas.length === 0) {
-        citasEl.innerHTML = '<p class="text-xs text-stone-500 py-3 text-center">Sin citas agendadas pendientes.</p>';
-      } else {
-        citasEl.innerHTML = citasActivas.map(c => {
-          const emp = appState.employees.find(e => e.id === c.employeeId);
-          const srv = appState.services.find(s => s.id === c.serviceId);
-          return `
-            <div class="p-3 rounded-2xl bg-stone-50 border border-stone-200 flex flex-wrap items-center justify-between gap-2 text-xs">
-              <div>
-                <strong class="text-stone-900">${escapeHtml(c.date)} · ${escapeHtml(c.time)} — ${escapeHtml(c.client)}</strong>
-                <span class="block text-stone-600">
-                  ${escapeHtml(srv ? srv.name : "")} · Con: ${escapeHtml(emp ? emp.name : "")}
-                  ${c.advancePaid > 0 ? ` · <strong class="text-emerald-700">Adelanto: ${formatMoney(c.advancePaid)}</strong>` : ""}
-                </span>
-              </div>
-              <div class="flex gap-1.5">
-                <button type="button" onclick="editarCitaModal('${escapeHtml(c.id)}')"
-                        class="px-2.5 py-1.5 rounded-xl bg-white hover:bg-stone-100 border border-stone-300 font-bold cursor-pointer">
-                  Reagendar / Adelanto
-                </button>
-                <button type="button" onclick="marcarCitaTerminada('${escapeHtml(c.id)}'); renderizarCaja();"
-                        class="px-2.5 py-1.5 rounded-xl bg-emerald-600 text-white font-bold cursor-pointer">
-                  Pasar a Cobro
-                </button>
-              </div>
-            </div>
-          `;
-        }).join("");
-      }
+      // Calendario Visual y Citas en Caja
+      renderizarCalendarioVisual("caja-calendario-widget", "caja");
+      renderizarTarjetasCitasAgendadas(
+        document.getElementById("caja-citas-globales"),
+        document.getElementById("caja-dia-seleccionado-label"),
+        true
+      );
 
       // Salidas / Gastos hoy
       const gastosEl = document.getElementById("caja-gastos-list");
@@ -1416,7 +1904,7 @@
       showToast("Salida de caja registrada.");
     }
 
-    // --- MODAL DE COBRO Y CODI ---
+    // --- MODAL DE COBRO Y CODI (SIN MOSTRAR TIPO DE CAMBIO Y QR CODI SIN MONTO FIJO) ---
     let cobroActualAdvance = 0;
     let cobroActualServiceName = "";
     let cobroActualClient = "";
@@ -1425,6 +1913,10 @@
       const item = appState.readyToPay.find(r => r.id === colaId);
       if (!item) return;
       const emp = appState.employees.find(e => e.id === item.employeeId);
+
+      document.getElementById("cobro-is-direct").value = "0";
+      document.getElementById("cobro-resumen-box").classList.remove("hidden");
+      document.getElementById("cobro-directo-fields").classList.add("hidden");
 
       document.getElementById("cobro-item-id").value = item.id;
       document.getElementById("cobro-empleado-id").value = item.employeeId;
@@ -1446,26 +1938,56 @@
       currentTipMode = "ninguna";
       currentTipValue = 0;
       document.getElementById("cobro-propina-libre").value = "";
+      document.getElementById("cobro-recibido-input").value = "";
       recalcularTotalCobro();
       cambiarMetodoPagoUI();
       document.getElementById("modal-cobro").classList.remove("hidden");
     }
 
     function abrirModalCobroDirecto() {
-      const srv = appState.services[0];
-      const emp = appState.employees.find(e => e.role === "especialista") || appState.employees[0];
-      const tempId = "cola-" + Date.now();
-      appState.readyToPay.unshift({
-        id: tempId,
-        client: "Clienta Mostrador",
-        employeeId: emp.id,
-        serviceId: srv ? srv.id : "",
-        serviceName: srv ? srv.name : "Servicio General",
-        price: srv ? Number(srv.price) : 500,
-        advancePaid: 0,
-        finishedAt: horaActual()
-      });
-      abrirModalCobro(tempId);
+      const especialistas = appState.employees.filter(e => e.role === "especialista" || e.role === "manager");
+      const empSel = document.getElementById("cobro-direct-emp");
+      const srvSel = document.getElementById("cobro-direct-srv");
+
+      empSel.innerHTML = (especialistas.length ? especialistas : appState.employees)
+        .map(e => `<option value="${escapeHtml(e.id)}">${escapeHtml(e.name)}</option>`).join("");
+      srvSel.innerHTML = appState.services
+        .map(s => `<option value="${escapeHtml(s.id)}">${escapeHtml(s.name)} (${formatMoney(s.price)})</option>`).join("");
+
+      document.getElementById("cobro-is-direct").value = "1";
+      document.getElementById("cobro-item-id").value = "";
+      document.getElementById("cobro-resumen-box").classList.add("hidden");
+      document.getElementById("cobro-directo-fields").classList.remove("hidden");
+      document.getElementById("cobro-adelanto-row").classList.add("hidden");
+      document.getElementById("cobro-direct-cliente").value = "Clienta Mostrador";
+
+      cobroActualAdvance = 0;
+      currentTipMode = "ninguna";
+      currentTipValue = 0;
+      document.getElementById("cobro-propina-libre").value = "";
+      document.getElementById("cobro-recibido-input").value = "";
+
+      alCambiarServicioDirecto();
+      cambiarMetodoPagoUI();
+      document.getElementById("modal-cobro").classList.remove("hidden");
+    }
+
+    function alCambiarServicioDirecto() {
+      const srvId = document.getElementById("cobro-direct-srv").value;
+      const srv = appState.services.find(s => s.id === srvId);
+      const precio = srv ? Number(srv.price || 0) : 0;
+      document.getElementById("cobro-direct-precio").value = precio;
+      document.getElementById("cobro-precio-base").value = precio;
+      sincronizarCamposCobroDirecto();
+      recalcularTotalCobro();
+    }
+
+    function sincronizarCamposCobroDirecto() {
+      const srvId = document.getElementById("cobro-direct-srv").value;
+      const srv = appState.services.find(s => s.id === srvId);
+      cobroActualClient = document.getElementById("cobro-direct-cliente").value.trim() || "Clienta Mostrador";
+      cobroActualServiceName = srv ? srv.name : "Servicio General";
+      document.getElementById("cobro-empleado-id").value = document.getElementById("cobro-direct-emp").value;
     }
 
     function cerrarModalCobro() {
@@ -1499,15 +2021,24 @@
       const tc = Number(appState.config.exchangeRate || 19.5);
       const totalUsd = totalMxn / tc;
 
+      // Mostrar MXN grande y USD abajo más chico, SIN mostrar el tipo de cambio
       document.getElementById("cobro-propina-calculada").textContent = `${formatMoney(propina)} MXN`;
-      document.getElementById("cobro-total-mxn").textContent = formatMoney(totalMxn);
-      document.getElementById("cobro-total-usd-ref").textContent = `≈ $${totalUsd.toFixed(2)} USD (TC $${tc.toFixed(2)})`;
+      document.getElementById("cobro-total-mxn").textContent = `${formatMoney(totalMxn)} MXN`;
+      document.getElementById("cobro-total-usd-ref").textContent = `$${totalUsd.toFixed(2)} USD`;
 
-      // Actualizar QR de CoDi si está visible
-      const codiPayload = `CODI|${appState.config.codiClabe}|MONTO:${totalMxn.toFixed(2)}|REF:${cobroActualClient}`;
+      const checked = document.querySelector('input[name="metodo_pago"]:checked');
+      const method = checked ? checked.value : "efectivo_mxn";
+      const recibido = Number(document.getElementById("cobro-recibido-input").value || 0);
+      const recibidoEnMxn = method === "efectivo_usd" ? recibido * tc : recibido;
+      const cambio = Math.max(0, recibidoEnMxn - totalMxn);
+      document.getElementById("cobro-cambio-display").textContent = `${formatMoney(cambio)} MXN`;
+
+      // QR de CoDi SIN monto fijo (para que la clienta ingrese la cantidad que dice la caja)
+      const codiPayloadAbierto = `CODI|${appState.config.codiClabe}|BENEFICIARIO:${appState.config.businessName}|SIN_MONTO`;
       document.getElementById("codi-qr-img").src =
-        "https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=" + encodeURIComponent(codiPayload);
+        "https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=" + encodeURIComponent(codiPayloadAbierto);
       document.getElementById("codi-clabe-display").textContent = appState.config.codiClabe;
+      document.getElementById("codi-monto-indicar").textContent = `${formatMoney(totalMxn)} MXN`;
 
       return { precio, netoServicio, propina, totalMxn };
     }
@@ -1517,10 +2048,18 @@
       const method = checked ? checked.value : "efectivo_mxn";
       document.getElementById("panel-pago-codi").classList.toggle("hidden", method !== "codi");
       document.getElementById("panel-pago-mixto").classList.toggle("hidden", method !== "mixto");
+      document.getElementById("panel-pago-efectivo-cambio").classList.toggle(
+        "hidden",
+        method !== "efectivo_mxn" && method !== "efectivo_usd"
+      );
+      recalcularTotalCobro();
     }
 
     function confirmarCobroTicket(event) {
       event.preventDefault();
+      if (document.getElementById("cobro-is-direct").value === "1") {
+        sincronizarCamposCobroDirecto();
+      }
       const colaId = document.getElementById("cobro-item-id").value;
       const empId = document.getElementById("cobro-empleado-id").value;
       const checked = document.querySelector('input[name="metodo_pago"]:checked');
@@ -1539,7 +2078,7 @@
         digitalMxn = calc.totalMxn;
       }
 
-      appState.tickets.unshift({
+      const nuevoTicket = {
         id: "tck-" + Date.now(),
         date: hoyISO(),
         time: horaActual(),
@@ -1551,25 +2090,85 @@
         method: method,
         cashMxn: cashMxn,
         digitalMxn: digitalMxn
-      });
+      };
 
-      appState.readyToPay = appState.readyToPay.filter(r => r.id !== colaId);
+      appState.tickets.unshift(nuevoTicket);
+
+      if (colaId) {
+        appState.readyToPay = appState.readyToPay.filter(r => r.id !== colaId);
+      }
       saveState();
+      enviarAGoogleSheets("cobro_ticket", nuevoTicket);
       cerrarModalCobro();
       renderizarCaja();
       showToast(`✓ Cobro de ${formatMoney(calc.totalMxn)} registrado correctamente.`);
     }
 
-    // --- CITAS Y REAGENDAMIENTOS ---
+    function generarCorteZDiario() {
+      const hoy = hoyISO();
+      const ticketsHoy = appState.tickets.filter(t => t.date === hoy);
+      const gastosHoy = appState.expenses.filter(g => g.date === hoy);
+
+      const totalServicios = ticketsHoy.reduce((acc, t) => acc + Number(t.serviceAmount || 0), 0);
+      const totalPropinas = ticketsHoy.reduce((acc, t) => acc + Number(t.tipAmount || 0), 0);
+      const totalEfectivo = ticketsHoy.reduce((acc, t) => acc + Number(t.cashMxn || 0), 0);
+      const totalDigital = ticketsHoy.reduce((acc, t) => acc + Number(t.digitalMxn || 0), 0);
+      const totalGastos = gastosHoy.reduce((acc, g) => acc + Number(g.amount || 0), 0);
+      const netoCajon = totalEfectivo - totalGastos;
+
+      const resumen = [
+        `==========================================`,
+        `CORTE Z DE CAJA — ${appState.config.businessName.toUpperCase()}`,
+        `Fecha: ${hoy} · Hora de corte: ${horaActual()}`,
+        `==========================================`,
+        `Tickets cobrados hoy: ${ticketsHoy.length}`,
+        `Ingresos por servicios: ${formatMoney(totalServicios)}`,
+        `Propinas recaudadas:    ${formatMoney(totalPropinas)}`,
+        `------------------------------------------`,
+        `Total Efectivo recibido: ${formatMoney(totalEfectivo)}`,
+        `Total Digital (CoDi/Tarj/Transf): ${formatMoney(totalDigital)}`,
+        `Salidas / Gastos de caja: -${formatMoney(totalGastos)}`,
+        `EFECTIVO NETO EN CAJÓN:  ${formatMoney(netoCajon)}`,
+        `==========================================`,
+        `DETALLE DE MOVIMIENTOS:`,
+        ...ticketsHoy.map(t => `- [${t.time}] ${t.client} | ${t.serviceName} | ${t.method.toUpperCase()} | Serv: ${formatMoney(t.serviceAmount)} | Prop: ${formatMoney(t.tipAmount)}`),
+        ...(gastosHoy.length ? ["", "SALIDAS DE CAJA:", ...gastosHoy.map(g => `- [${g.time}] ${g.concept}: -${formatMoney(g.amount)}`)] : [])
+      ].join("\n");
+
+      const blob = new Blob([resumen], { type: "text/plain;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `corte-z-${hoy}.txt`;
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast("✓ Corte Z diario descargado.");
+    }
+
+    // --- CITAS VISUALES CON MÚLTIPLES SERVICIOS (+ y X), TELÉFONO, CORREO Y RESTRICCIÓN DE ADELANTO ---
+    let citaServiceRowsData = [];
+
     function abrirModalNuevaCita() {
       document.getElementById("cita-edit-id").value = "";
       document.getElementById("cita-modal-title").textContent = "Nueva Cita";
       document.getElementById("cita-cliente").value = "";
-      document.getElementById("cita-fecha").value = hoyISO();
+      document.getElementById("cita-telefono").value = "";
+      document.getElementById("cita-correo").value = "";
+      document.getElementById("cita-fecha").value = (selectedCalendarDate && selectedCalendarDate !== "todas") ? selectedCalendarDate : hoyISO();
       document.getElementById("cita-hora").value = "11:00";
       document.getElementById("cita-adelanto").value = "0";
       document.getElementById("cita-notas").value = "";
+
       poblarSelectsCita();
+      const defaultSrvId = appState.services[0] ? appState.services[0].id : "";
+      citaServiceRowsData = defaultSrvId ? [defaultSrvId] : [];
+      renderizarFilasServiciosCita();
+      renderizarCatalogoVisualCita();
+
+      // Especialistas NO pueden pedir ni registrar adelantos; eso se hace en Caja
+      const esEspecialista = currentUser && currentUser.role === "especialista";
+      document.getElementById("cita-adelanto-wrapper").classList.toggle("hidden", esEspecialista);
+
       document.getElementById("modal-cita").classList.remove("hidden");
     }
 
@@ -1578,24 +2177,99 @@
       if (!cita) return;
       poblarSelectsCita();
       document.getElementById("cita-edit-id").value = cita.id;
-      document.getElementById("cita-modal-title").textContent = "Reagendar / Registrar Adelanto";
-      document.getElementById("cita-cliente").value = cita.client;
+      document.getElementById("cita-modal-title").textContent = "Editar / Reagendar Cita";
+      document.getElementById("cita-cliente").value = cita.client || "";
+      document.getElementById("cita-telefono").value = cita.phone || "";
+      document.getElementById("cita-correo").value = cita.email || "";
       document.getElementById("cita-fecha").value = cita.date;
       document.getElementById("cita-hora").value = cita.time;
       document.getElementById("cita-especialista").value = cita.employeeId;
-      document.getElementById("cita-servicio").value = cita.serviceId;
       document.getElementById("cita-adelanto").value = cita.advancePaid || 0;
       document.getElementById("cita-notas").value = cita.notes || "";
+
+      citaServiceRowsData = [...normalizarCitaServicios(cita)];
+      if (citaServiceRowsData.length === 0 && appState.services[0]) {
+        citaServiceRowsData.push(appState.services[0].id);
+      }
+      renderizarFilasServiciosCita();
+      renderizarCatalogoVisualCita();
+
+      const esEspecialista = currentUser && currentUser.role === "especialista";
+      document.getElementById("cita-adelanto-wrapper").classList.toggle("hidden", esEspecialista);
+
       document.getElementById("modal-cita").classList.remove("hidden");
     }
 
     function poblarSelectsCita() {
       const empSel = document.getElementById("cita-especialista");
-      const srvSel = document.getElementById("cita-servicio");
-      const especialistas = appState.employees.filter(e => e.role === "especialista" || e.role === "duena");
-
+      const especialistas = appState.employees.filter(e => e.role === "especialista" || e.role === "manager");
       empSel.innerHTML = especialistas.map(e => `<option value="${escapeHtml(e.id)}">${escapeHtml(e.name)}</option>`).join("");
-      srvSel.innerHTML = appState.services.map(s => `<option value="${escapeHtml(s.id)}">${escapeHtml(s.name)}</option>`).join("");
+      if (currentUser && currentUser.role === "especialista") {
+        empSel.value = currentUser.id;
+      }
+    }
+
+    function agregarFilaServicioCita(serviceId = null) {
+      const fallbackId = serviceId || (appState.services[0] ? appState.services[0].id : "");
+      if (!fallbackId) return;
+      citaServiceRowsData.push(fallbackId);
+      renderizarFilasServiciosCita();
+    }
+
+    function quitarFilaServicioCita(index) {
+      if (citaServiceRowsData.length <= 1) {
+        showToast("La cita debe tener al menos un servicio.", "error");
+        return;
+      }
+      citaServiceRowsData.splice(index, 1);
+      renderizarFilasServiciosCita();
+    }
+
+    function actualizarFilaServicioCita(index, nuevoServiceId) {
+      citaServiceRowsData[index] = nuevoServiceId;
+    }
+
+    function renderizarFilasServiciosCita() {
+      const container = document.getElementById("cita-servicios-rows");
+      const mostrarPrecios = currentUser && currentUser.role !== "especialista";
+
+      container.innerHTML = citaServiceRowsData.map((selectedId, index) => {
+        const optionsHtml = appState.services.map(s => {
+          const label = mostrarPrecios ? `${s.name} (${formatMoney(s.price)})` : `${s.name} · ${s.category}`;
+          return `<option value="${escapeHtml(s.id)}" ${s.id === selectedId ? "selected" : ""}>${escapeHtml(label)}</option>`;
+        }).join("");
+
+        return `
+          <div class="flex items-center gap-2 bg-white p-2 rounded-xl border border-emerald-200 shadow-2xs">
+            <span class="w-6 h-6 rounded-lg bg-emerald-100 text-emerald-800 text-xs font-extrabold flex items-center justify-center shrink-0">
+              ${index + 1}
+            </span>
+            <select onchange="actualizarFilaServicioCita(${index}, this.value)"
+                    class="flex-1 rounded-lg border border-stone-200 bg-stone-50 px-2.5 py-1.5 text-xs font-bold text-stone-900 outline-none focus:border-emerald-600">
+              ${optionsHtml}
+            </select>
+            <button type="button" onclick="agregarFilaServicioCita()" title="Agregar otro servicio"
+                    class="w-8 h-8 rounded-lg bg-emerald-100 hover:bg-emerald-200 text-emerald-800 font-extrabold text-sm flex items-center justify-center transition cursor-pointer shrink-0">
+              +
+            </button>
+            <button type="button" onclick="quitarFilaServicioCita(${index})" title="Quitar este servicio"
+                    class="w-8 h-8 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 font-extrabold text-xs flex items-center justify-center transition cursor-pointer shrink-0">
+              ✕
+            </button>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function renderizarCatalogoVisualCita() {
+      const container = document.getElementById("cita-catalogo-visual");
+      const mostrarPrecios = currentUser && currentUser.role !== "especialista";
+      container.innerHTML = appState.services.map(s => `
+        <button type="button" onclick="agregarFilaServicioCita('${escapeHtml(s.id)}')"
+                class="px-2.5 py-1 rounded-xl bg-white hover:bg-emerald-100 border border-stone-200 hover:border-emerald-300 text-[11px] font-bold text-stone-800 transition cursor-pointer">
+          + ${escapeHtml(s.name)}${mostrarPrecios ? ` · ${formatMoney(s.price)}` : ""}
+        </button>
+      `).join("");
     }
 
     function cerrarModalCita() {
@@ -1605,29 +2279,41 @@
     function guardarCitaForm(event) {
       event.preventDefault();
       const editId = document.getElementById("cita-edit-id").value;
+      const esEspecialista = currentUser && currentUser.role === "especialista";
+
       const data = {
         client: document.getElementById("cita-cliente").value.trim(),
+        phone: document.getElementById("cita-telefono").value.trim(),
+        email: document.getElementById("cita-correo").value.trim(),
         date: document.getElementById("cita-fecha").value,
         time: document.getElementById("cita-hora").value,
         employeeId: document.getElementById("cita-especialista").value,
-        serviceId: document.getElementById("cita-servicio").value,
-        advancePaid: Number(document.getElementById("cita-adelanto").value || 0),
+        serviceIds: [...citaServiceRowsData],
+        advancePaid: esEspecialista ? 0 : Number(document.getElementById("cita-adelanto").value || 0),
         notes: document.getElementById("cita-notas").value.trim(),
         status: "agendada"
       };
 
       if (editId) {
         const idx = appState.appointments.findIndex(a => a.id === editId);
-        if (idx !== -1) appState.appointments[idx] = Object.assign({}, appState.appointments[idx], data);
+        if (idx !== -1) {
+          if (esEspecialista) {
+            data.advancePaid = Number(appState.appointments[idx].advancePaid || 0);
+          }
+          appState.appointments[idx] = Object.assign({}, appState.appointments[idx], data);
+        }
       } else {
-        appState.appointments.unshift(Object.assign({ id: "cit-" + Date.now() }, data));
+        const nuevaCita = Object.assign({ id: "cit-" + Date.now() }, data);
+        appState.appointments.unshift(nuevaCita);
+        enviarAGoogleSheets("nueva_cita", nuevaCita);
       }
 
       saveState();
       cerrarModalCita();
       if (activeModule === "especialista") renderizarVistaEspecialista();
       if (activeModule === "caja") renderizarCaja();
-      showToast("✓ Cita guardada en agenda.");
+      if (activeModule === "dashboard") renderizarDashboard();
+      showToast("✓ Cita guardada y reflejada en el feed en vivo.");
     }
 
     // --- CHECADOR DE TIEMPO CON DESCANSO ---
@@ -1667,6 +2353,7 @@
       saveState();
       renderizarLogChecadorHoy();
       if (activeModule === "especialista") renderizarVistaEspecialista();
+      if (activeModule === "admin") renderizarAdmin();
       showToast(`✓ ${emp.name}: ${labels[type]} (${horaActual()})`);
     }
 
@@ -1684,7 +2371,7 @@
       }).join("");
     }
 
-    // --- DASHBOARD CONTABLE Y CORTE DE VIERNES ---
+    // --- DASHBOARD CONTABLE, AGENDA Y CORTE DE VIERNES ---
     function aplicarFiltroRapidoDashboard(tipo) {
       const hoy = hoyISO();
       if (tipo === "hoy") {
@@ -1713,7 +2400,6 @@
       const totalDigital = tickets.reduce((acc, t) => acc + Number(t.digitalMxn || 0), 0);
       const totalGastos = gastos.reduce((acc, g) => acc + Number(g.amount || 0), 0);
 
-      // Cálculo de nómina del periodo por empleado
       let nominaBaseTotal = 0;
       const nominaPorEmpleado = appState.employees.map(emp => {
         const calc = calcularGananciaEmpleado(emp, start, end);
@@ -1728,12 +2414,20 @@
       document.getElementById("dash-col-digital").textContent = formatMoney(totalDigital);
       document.getElementById("dash-utilidad-neta").textContent = formatMoney(utilidadNeta);
 
+      // Calendario visual también en el panel del Manager
+      renderizarCalendarioVisual("dash-calendario-widget", "dashboard");
+      renderizarTarjetasCitasAgendadas(
+        document.getElementById("dash-citas-lista"),
+        document.getElementById("dash-dia-seleccionado-label"),
+        false
+      );
+
       // Desglose por método de pago
       const metodos = ["efectivo_mxn", "efectivo_usd", "codi", "tarjeta", "transferencia", "mixto"];
       const nombresMetodo = {
         efectivo_mxn: "💵 Efectivo MXN",
         efectivo_usd: "🇺🇸 Efectivo USD (en MXN)",
-        codi: "📲 CoDi® QR (Sin comisión)",
+        codi: "📲 CoDi® QR",
         tarjeta: "💳 Tarjeta Bancaria",
         transferencia: "🏦 Transferencia SPEI",
         mixto: "🔀 Pago Mixto"
@@ -1751,7 +2445,7 @@
         `;
       }).join("");
 
-      // Lista de Corte Semanal (Viernes) con estado pendiente / enviado / pagado
+      // Lista de Corte Semanal (Viernes)
       const periodoKey = `${start}_${end}`;
       document.getElementById("dash-nomina-list").innerHTML = nominaPorEmpleado.map(({ emp, calc }) => {
         const statusKey = `${periodoKey}_${emp.id}`;
@@ -1816,64 +2510,197 @@
           t.serviceName,
           emp ? emp.name : "",
           t.method,
-          t.serviceAmount,
-          t.tipAmount,
-          t.cashMxn,
-          t.digitalMxn
+          Number(t.serviceAmount || 0).toFixed(2),
+          Number(t.tipAmount || 0).toFixed(2),
+          Number(t.cashMxn || 0).toFixed(2),
+          Number(t.digitalMxn || 0).toFixed(2)
         ].map(v => `"${String(v).replace(/"/g, '""')}"`).join(",");
       });
 
-      const blob = new Blob(["\uFEFF" + [headers.join(","), ...rows].join("\n")], { type: "text/csv;charset=utf-8;" });
+      const csv = "\uFEFF" + [headers.join(","), ...rows].join("\n");
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `meraki-contabilidad-${start}-a-${end}.csv`;
+      a.download = `contabilidad-meraki-${start}-a-${end}.csv`;
       a.click();
       URL.revokeObjectURL(url);
       showToast("✓ Reporte contable CSV descargado.");
     }
 
-    // --- ADMINISTRACIÓN Y RESPALDO PORTÁTIL ---
+    // --- ADMINISTRACIÓN (MANAGER: EQUIPO, TAREAS ASIGNADAS, BOTONES VERDE/ROJO Y CATÁLOGO) ---
     function renderizarAdmin() {
       document.getElementById("cfg-nombre-negocio").value = appState.config.businessName || "Meraki Studio";
       document.getElementById("cfg-tipo-cambio").value = appState.config.exchangeRate || 19.5;
       document.getElementById("cfg-codi-clabe").value = appState.config.codiClabe || "";
+      document.getElementById("cfg-sheets-webhook").value = appState.config.sheetsWebhookUrl || "";
 
-      document.getElementById("admin-empleados-list").innerHTML = appState.employees.map(emp => `
-        <div class="p-3 rounded-2xl bg-stone-50 border border-stone-200 flex items-center justify-between text-xs">
-          <div>
-            <strong class="text-stone-900 text-sm">${escapeHtml(emp.name)}</strong>
-            <span class="block text-stone-500">Rol: ${escapeHtml(emp.role)} · Esquema: ${escapeHtml(emp.payType)} (${emp.payValue})</span>
+      renderizarCheckboxesTareasEmpleado([]);
+
+      document.getElementById("admin-empleados-list").innerHTML = appState.employees.map(emp => {
+        const estadoAsistencia = obtenerEstadoAsistenciaHoy(emp.id);
+        const esActivo = estadoAsistencia === "activo";
+        const isConfirmDelete = pendingDeleteEmpId === emp.id;
+
+        const tareasTexto = (emp.assignedServices && emp.assignedServices.length > 0)
+          ? emp.assignedServices.map(sId => {
+              const s = appState.services.find(item => item.id === sId);
+              return s ? s.name : "";
+            }).filter(Boolean).join(", ")
+          : "Sin tareas específicas asignadas";
+
+        return `
+          <div class="p-3.5 rounded-2xl bg-stone-50 border border-stone-200 space-y-2 text-xs">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <div class="flex items-center gap-2">
+                <span class="w-3 h-3 rounded-full ${esActivo ? 'bg-emerald-500 ring-4 ring-emerald-100' : 'bg-rose-500 ring-4 ring-rose-100'}"></span>
+                <div>
+                  <strong class="text-stone-900 text-sm">${escapeHtml(emp.name)}</strong>
+                  <span class="block text-stone-500">
+                    Rol: <strong>${escapeHtml(obtenerEtiquetaRol(emp.role))}</strong> · Esquema: ${escapeHtml(emp.payType)} (${emp.payValue})
+                  </span>
+                </div>
+              </div>
+
+              <!-- Botón Verde (Entrada) y Botón Rojo (Salida) junto al nombre -->
+              <div class="flex flex-wrap items-center gap-1.5">
+                <button type="button" onclick="marcarAsistenciaRapidaManager('${escapeHtml(emp.id)}', 'entrada')"
+                        class="px-2.5 py-1 rounded-xl ${esActivo ? 'bg-emerald-600 text-white shadow-xs' : 'bg-emerald-100 hover:bg-emerald-200 text-emerald-900'} font-extrabold cursor-pointer">
+                  🟢 Entrada
+                </button>
+                <button type="button" onclick="marcarAsistenciaRapidaManager('${escapeHtml(emp.id)}', 'salida')"
+                        class="px-2.5 py-1 rounded-xl ${!esActivo ? 'bg-rose-600 text-white shadow-xs' : 'bg-rose-100 hover:bg-rose-200 text-rose-900'} font-extrabold cursor-pointer">
+                  🔴 Salida
+                </button>
+                <button type="button" onclick="cargarEmpleadoParaEditar('${escapeHtml(emp.id)}')"
+                        class="px-2.5 py-1 rounded-xl bg-white hover:bg-stone-100 border border-stone-300 font-bold cursor-pointer">
+                  Editar / Tareas
+                </button>
+                ${appState.employees.length > 1 ? `
+                  <button type="button" onclick="eliminarEmpleado('${escapeHtml(emp.id)}')"
+                          class="px-2.5 py-1 rounded-xl ${isConfirmDelete ? 'bg-rose-700 text-white' : 'bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200'} font-bold cursor-pointer">
+                    ${isConfirmDelete ? "Confirmar Borrar" : "Borrar"}
+                  </button>
+                ` : ""}
+              </div>
+            </div>
+
+            <div class="pl-5 text-[11px] text-stone-600">
+              <strong class="text-stone-700">Tareas asignadas:</strong> ${escapeHtml(tareasTexto)}
+            </div>
           </div>
-          <span class="px-3 py-1 rounded-xl bg-stone-900 text-amber-300 font-mono font-extrabold">PIN: ${escapeHtml(emp.pin)}</span>
-        </div>
-      `).join("");
+        `;
+      }).join("");
 
       document.getElementById("admin-servicios-list").innerHTML = appState.services.map(srv => `
-        <div class="p-3 rounded-2xl bg-stone-50 border border-stone-200 flex items-center justify-between text-xs">
+        <div class="p-3 rounded-2xl bg-stone-50 border border-stone-200 flex items-center justify-between gap-2 text-xs">
           <div>
             <span class="text-[10px] uppercase font-bold text-stone-400 block">${escapeHtml(srv.category)}</span>
             <strong class="text-stone-900">${escapeHtml(srv.name)}</strong>
           </div>
-          <strong class="text-emerald-700 text-sm">${formatMoney(srv.price)}</strong>
+          <div class="flex items-center gap-1.5">
+            <strong class="text-emerald-700 text-sm mr-1">${formatMoney(srv.price)}</strong>
+            <button type="button" onclick="editarServicioCatalogo('${escapeHtml(srv.id)}')"
+                    class="px-2 py-1 rounded-lg bg-white hover:bg-stone-100 border border-stone-300 font-bold cursor-pointer">
+              Editar
+            </button>
+            <button type="button" onclick="eliminarServicioCatalogo('${escapeHtml(srv.id)}')"
+                    class="px-2 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-bold cursor-pointer">
+              Quitar
+            </button>
+          </div>
         </div>
       `).join("");
     }
 
+    function renderizarCheckboxesTareasEmpleado(selectedIds = []) {
+      const box = document.getElementById("emp-tareas-checkboxes");
+      if (!box) return;
+      box.innerHTML = appState.services.map(srv => {
+        const checked = selectedIds.includes(srv.id) ? "checked" : "";
+        return `
+          <label class="flex items-center gap-2 p-1.5 rounded-lg hover:bg-stone-50 cursor-pointer">
+            <input type="checkbox" name="emp_tarea_srv" value="${escapeHtml(srv.id)}" ${checked} class="rounded text-emerald-600" />
+            <span class="font-semibold text-stone-800">${escapeHtml(srv.name)}</span>
+          </label>
+        `;
+      }).join("");
+    }
+
+    function seleccionarTodasTareasEmp(marcar) {
+      document.querySelectorAll('input[name="emp_tarea_srv"]').forEach(cb => {
+        cb.checked = marcar;
+      });
+    }
+
+    function limpiarFormEmpleado() {
+      document.getElementById("emp-edit-id").value = "";
+      document.getElementById("emp-nombre").value = "";
+      document.getElementById("emp-pin").value = "";
+      document.getElementById("emp-rol").value = "especialista";
+      document.getElementById("emp-esquema").value = "porcentaje";
+      document.getElementById("emp-valor").value = "";
+      renderizarCheckboxesTareasEmpleado([]);
+      pendingDeleteEmpId = null;
+    }
+
+    function cargarEmpleadoParaEditar(empId) {
+      const emp = appState.employees.find(e => e.id === empId);
+      if (!emp) return;
+      document.getElementById("emp-edit-id").value = emp.id;
+      document.getElementById("emp-nombre").value = emp.name;
+      document.getElementById("emp-pin").value = emp.pin;
+      document.getElementById("emp-rol").value = emp.role === "duena" ? "manager" : emp.role;
+      document.getElementById("emp-esquema").value = emp.payType;
+      document.getElementById("emp-valor").value = emp.payValue;
+      renderizarCheckboxesTareasEmpleado(emp.assignedServices || []);
+      showToast(`Editando usuario y tareas de ${emp.name}.`);
+    }
+
+    function eliminarEmpleado(empId) {
+      if (pendingDeleteEmpId !== empId) {
+        pendingDeleteEmpId = empId;
+        renderizarAdmin();
+        showToast("Presiona 'Confirmar Borrar' para eliminar definitivamente al usuario.", "error");
+        return;
+      }
+      pendingDeleteEmpId = null;
+      appState.employees = appState.employees.filter(e => e.id !== empId);
+      saveState();
+      renderizarAdmin();
+      showToast("✓ Usuario eliminado del equipo.");
+    }
+
     function guardarEmpleado(event) {
       event.preventDefault();
+      const editId = document.getElementById("emp-edit-id").value.trim();
       const name = document.getElementById("emp-nombre").value.trim();
       const pin = document.getElementById("emp-pin").value.trim();
       const role = document.getElementById("emp-rol").value;
       const payType = document.getElementById("emp-esquema").value;
       const payValue = Number(document.getElementById("emp-valor").value || 0);
 
-      const existing = appState.employees.find(e => String(e.pin) === pin);
-      if (existing) {
-        existing.name = name;
-        existing.role = role;
-        existing.payType = payType;
-        existing.payValue = payValue;
+      const assignedServices = Array.from(document.querySelectorAll('input[name="emp_tarea_srv"]:checked'))
+        .map(cb => cb.value);
+
+      const idxById = editId ? appState.employees.findIndex(e => e.id === editId) : -1;
+      const idxByPin = appState.employees.findIndex(e => String(e.pin) === pin && e.id !== editId);
+
+      if (idxByPin !== -1) {
+        showToast("Ese PIN ya está asignado a otro usuario. Usa otro PIN.", "error");
+        return;
+      }
+
+      if (idxById !== -1) {
+        appState.employees[idxById] = {
+          ...appState.employees[idxById],
+          name,
+          pin,
+          role,
+          payType,
+          payValue,
+          assignedServices
+        };
       } else {
         appState.employees.push({
           id: "emp-" + Date.now(),
@@ -1881,43 +2708,79 @@
           pin,
           role,
           payType,
-          payValue
+          payValue,
+          assignedServices
         });
       }
 
-      event.target.reset();
+      limpiarFormEmpleado();
       saveState();
       renderizarAdmin();
-      showToast("✓ Miembro del equipo guardado.");
-    }
-
-    function guardarServicioCatalogo(event) {
-      event.preventDefault();
-      const name = document.getElementById("srv-nombre").value.trim();
-      const category = document.getElementById("srv-categoria").value.trim();
-      const price = Number(document.getElementById("srv-precio").value || 0);
-
-      appState.services.push({
-        id: "srv-" + Date.now(),
-        name,
-        category,
-        price
-      });
-
-      event.target.reset();
-      saveState();
-      renderizarAdmin();
-      showToast("✓ Servicio agregado al catálogo.");
+      showToast("✓ Usuario y tareas guardados.");
     }
 
     function guardarConfiguracionNegocio(event) {
       event.preventDefault();
-      appState.config.businessName = document.getElementById("cfg-nombre-negocio").value.trim() || "Meraki Studio";
+      appState.config.businessName = document.getElementById("cfg-nombre-negocio").value.trim();
       appState.config.exchangeRate = Number(document.getElementById("cfg-tipo-cambio").value || 19.5);
       appState.config.codiClabe = document.getElementById("cfg-codi-clabe").value.trim();
+      appState.config.sheetsWebhookUrl = document.getElementById("cfg-sheets-webhook").value.trim();
       document.getElementById("header-business-name").textContent = appState.config.businessName;
       saveState();
       showToast("✓ Configuración guardada.");
+    }
+
+    function limpiarFormServicio() {
+      document.getElementById("srv-edit-id").value = "";
+      document.getElementById("srv-nombre").value = "";
+      document.getElementById("srv-categoria").value = "";
+      document.getElementById("srv-precio").value = "";
+    }
+
+    function editarServicioCatalogo(srvId) {
+      const srv = appState.services.find(s => s.id === srvId);
+      if (!srv) return;
+      document.getElementById("srv-edit-id").value = srv.id;
+      document.getElementById("srv-nombre").value = srv.name;
+      document.getElementById("srv-categoria").value = srv.category;
+      document.getElementById("srv-precio").value = srv.price;
+      showToast(`Editando servicio: ${srv.name}`);
+    }
+
+    function guardarServicioCatalogo(event) {
+      event.preventDefault();
+      const editId = document.getElementById("srv-edit-id").value.trim();
+      const name = document.getElementById("srv-nombre").value.trim();
+      const category = document.getElementById("srv-categoria").value.trim();
+      const price = Number(document.getElementById("srv-precio").value || 0);
+
+      if (editId) {
+        const idx = appState.services.findIndex(s => s.id === editId);
+        if (idx !== -1) {
+          appState.services[idx] = { ...appState.services[idx], name, category, price };
+        }
+      } else {
+        const nuevoSrv = {
+          id: "srv-" + Date.now(),
+          name,
+          category,
+          price
+        };
+        appState.services.push(nuevoSrv);
+        enviarAGoogleSheets("nuevo_servicio", nuevoSrv);
+      }
+
+      limpiarFormServicio();
+      saveState();
+      renderizarAdmin();
+      showToast("✓ Catálogo de servicios actualizado.");
+    }
+
+    function eliminarServicioCatalogo(srvId) {
+      appState.services = appState.services.filter(s => s.id !== srvId);
+      saveState();
+      renderizarAdmin();
+      showToast("Servicio quitado del catálogo.");
     }
 
     function exportarRespaldoJSON() {
@@ -1928,7 +2791,7 @@
       a.download = `respaldo-meraki-${hoyISO()}.json`;
       a.click();
       URL.revokeObjectURL(url);
-      showToast("✓ Respaldo .JSON listo para guardar en USB o nube.");
+      showToast("✓ Archivo de respaldo (.JSON) descargado.");
     }
 
     function importarRespaldoJSON(event) {
@@ -1938,23 +2801,71 @@
       reader.onload = function(e) {
         try {
           const imported = JSON.parse(e.target.result);
-          if (imported && imported.employees && imported.services) {
-            appState = imported;
-            saveState();
-            renderizarAdmin();
-            showToast("✓ Datos restaurados desde el archivo.");
-          } else {
-            showToast("Archivo de respaldo no válido.", "error");
+          if (!imported || !Array.isArray(imported.employees)) {
+            throw new Error("Formato inválido");
           }
+          appState = imported;
+          saveState();
+          renderizarAdmin();
+          showToast("✓ Respaldo cargado correctamente.");
         } catch (err) {
-          showToast("No se pudo leer el archivo JSON.", "error");
+          showToast("No se pudo leer el archivo de respaldo.", "error");
         }
       };
       reader.readAsText(file);
     }
 
+    // Actualización en vivo entre pestañas o ventanas abiertas sin refrescar página
+    window.addEventListener("storage", function(e) {
+      if (e.key === STORAGE_KEY) {
+        loadState();
+        if (!currentUser) {
+          renderDemoPins();
+          return;
+        }
+        if (activeModule === "especialista") renderizarVistaEspecialista();
+        if (activeModule === "caja") renderizarCaja();
+        if (activeModule === "dashboard") renderizarDashboard();
+        if (activeModule === "admin") renderizarAdmin();
+      }
+    });
+
+    // Sincronizar favicon con logo.png del mismo folder (con respaldo automático si no existe)
+    function inicializarLogoYFavicon() {
+      const testImg = new Image();
+      testImg.onload = function() {
+        const fav = document.getElementById("meraki-favicon");
+        if (fav) fav.href = "logo.png";
+      };
+      testImg.onerror = function() {
+        const fav = document.getElementById("meraki-favicon");
+        if (fav) fav.href = MERAKI_FALLBACK_LOGO;
+      };
+      testImg.src = "logo.png";
+    }
+
+    // Soporte de teclado físico para el login por PIN
+    document.addEventListener("keydown", function(e) {
+      if (currentUser) return;
+      const checadorModal = document.getElementById("modal-checador");
+      if (checadorModal && !checadorModal.classList.contains("hidden")) return;
+
+      if (e.key >= "0" && e.key <= "9") {
+        agregarDigitoPin(e.key);
+      } else if (e.key === "Backspace") {
+        pinBuffer = pinBuffer.slice(0, -1);
+        actualizarVisorPin();
+      } else if (e.key === "Escape") {
+        limpiarPinInput();
+      } else if (e.key === "Enter" && pinBuffer.length > 0) {
+        e.preventDefault();
+        validarAccesoPin();
+      }
+    });
+
     // Inicialización al cargar
     loadState();
+    inicializarLogoYFavicon();
     document.getElementById("header-business-name").textContent = appState.config.businessName;
     renderDemoPins();
   </script>
